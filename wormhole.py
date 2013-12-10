@@ -1,9 +1,10 @@
-import boto.ec2, boto.manage.cmdshell
+import boto.ec2
+# import boto.manage.cmdshell
 import os, time
 from urllib import urlopen
 
-AMI_ID = 'ami-64340421'
-AMI_USER_NAME = 'root'
+AMI_ID = 'ami-4836060d'
+AMI_USER_NAME = 'ec2-user'
 KEY_PAIR_NAME = 'wormhole-kp'
 SECURITY_GROUP_NAME = 'wormhole-sg'
 INSTANCE_SIZE = 't1.micro'
@@ -13,11 +14,15 @@ class Wormhole(object):
 	"""Creates EC2 instances for OpenVPN tunneling"""
 	def __init__(self, region='us-west-1'):
 		super(Wormhole, self).__init__()		
-		self.conn = boto.ec2.connect_to_region(region, aws_access_key_id=os.getenv('AWS_ACCESS_KEY'), aws_secret_access_key=os.getenv('AWS_SECRET_KEY'))					
+		(aws_access_key, aws_secret_key) = self._get_credentials()
+		self.conn = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)					
 		self.security_group = None
 		self.key_pair = None
 		self.public_ip = None
 		self.reservation = None
+
+	def _get_credentials(self):
+		return (os.getenv('AWS_ACCESS_KEY'), os.getenv('AWS_SECRET_KEY'))
 
 	def get_public_ip(self):
 		self.public_ip = urlopen('http://bot.whatismyipaddress.com/').read().strip()
@@ -71,19 +76,26 @@ class Wormhole(object):
 		self.security_group.revoke(ip_protocol='udp', from_port=1194, to_port=1194, cidr_ip='%s/32' % self.public_ip)
 
 	def start(self):
+		print 'Setting up key pair...'
 		self.create_key_pair_if_necessary()
+		
+		print 'Configuring security rule...'
 		self.enable_access()		
-		self.reservation = self.conn.run_instances(AMI_ID, key_name=KEY_PAIR_NAME, instance_type=INSTANCE_SIZE, security_groups=[SECURITY_GROUP_NAME])
 
-	def connect(self):
+		print 'Launching instance...'
+		self.reservation = self.conn.run_instances(AMI_ID, key_name=KEY_PAIR_NAME, instance_type=INSTANCE_SIZE, security_groups=[SECURITY_GROUP_NAME])
 		instance = self.reservation.instances[0]
+		
 		print 'Waiting for instance...'
 		while instance.state!='running':
 			time.sleep(5)
 			instance.update()
+		
 		print 'Instance is running.'
 		self.instance_ip = instance.ip_address
-		self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
+
+	# def connect(self):
+	# 	self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
 
 	def stop(self):
 		self.disable_access()
