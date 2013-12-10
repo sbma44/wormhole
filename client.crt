@@ -1,0 +1,95 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 2 (0x2)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=DC, L=Washington, O=Wormhole, OU=WormholeVPN, CN=Wormhole/name=EasyRSA/emailAddress=thomas.j.lee@gmail.com
+        Validity
+            Not Before: Dec 10 20:34:02 2013 GMT
+            Not After : Dec  8 20:34:02 2023 GMT
+        Subject: C=US, ST=DC, L=Washington, O=Wormhole, OU=WormholeVPN, CN=wormhole-client/name=EasyRSA/emailAddress=thomas.j.lee@gmail.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:9a:7b:b5:72:09:3c:d9:d5:ec:89:d2:4a:93:86:
+                    ee:d5:e4:fa:35:95:e0:58:2e:b7:73:0e:f8:dd:43:
+                    2b:7d:54:91:19:dd:31:ae:3e:4f:56:e8:e2:5b:9d:
+                    e7:1c:5b:ce:ec:0f:23:3b:fd:ad:45:39:5e:bc:b3:
+                    63:56:f0:ff:4d:f6:12:06:e9:80:2a:6e:7a:56:d3:
+                    c7:80:c6:62:f4:5d:19:30:a1:6e:16:23:52:3e:dd:
+                    f8:f1:cd:28:ce:5a:68:49:a1:fe:0f:9a:86:e1:2a:
+                    48:12:15:c3:ba:8c:8d:a2:02:92:f3:b1:15:30:b3:
+                    53:e4:d6:c6:1b:b1:54:b0:ab:2a:4c:ca:be:5c:39:
+                    e8:01:54:5a:7a:b1:a2:f1:4d:c0:2a:1b:9b:62:1d:
+                    8f:0d:88:cb:b0:f6:d3:3b:98:8f:32:94:cf:82:ac:
+                    d4:1d:16:58:a3:55:de:46:ba:04:8d:25:26:0e:60:
+                    0c:4e:e0:72:6c:db:9a:1c:8e:c8:47:c5:4d:23:d1:
+                    ef:b8:45:b9:4d:09:5f:42:f0:84:40:ff:8b:2c:18:
+                    a1:bc:34:55:a6:ed:6f:54:ec:bb:8e:29:e8:f8:65:
+                    c5:42:b1:a7:ed:89:70:24:91:23:a1:0d:56:82:e0:
+                    60:7b:e3:93:a6:f0:e0:79:cb:cc:4b:0e:e2:09:5b:
+                    8d:57
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                Easy-RSA Generated Certificate
+            X509v3 Subject Key Identifier: 
+                3F:E6:E6:63:F4:05:47:16:4F:75:14:A3:F2:52:B5:A0:A1:35:AB:88
+            X509v3 Authority Key Identifier: 
+                keyid:86:AC:F2:E8:DF:71:58:67:EE:B3:E0:42:32:B8:0D:60:C2:DF:E2:8B
+                DirName:/C=US/ST=DC/L=Washington/O=Wormhole/OU=WormholeVPN/CN=Wormhole/name=EasyRSA/emailAddress=thomas.j.lee@gmail.com
+                serial:CD:ED:33:97:2D:B6:54:E9
+
+            X509v3 Extended Key Usage: 
+                TLS Web Client Authentication
+            X509v3 Key Usage: 
+                Digital Signature
+    Signature Algorithm: sha256WithRSAEncryption
+         5a:80:56:d2:92:f0:b5:27:e9:9a:3f:68:5e:10:66:61:b0:d1:
+         54:a6:33:59:78:65:f6:98:0f:81:d6:1f:8a:b4:6c:ae:d1:ef:
+         e1:00:e8:0d:95:c9:7f:b7:7f:97:3c:c4:dc:c2:48:a8:97:45:
+         df:5c:ee:44:ea:22:2d:50:97:10:ca:74:09:81:43:86:a4:16:
+         35:bd:47:54:eb:04:ca:0c:d2:9a:b6:c6:73:d8:9e:16:6e:28:
+         d2:58:25:82:da:dd:a7:9b:fe:d9:bc:32:b0:2d:4b:03:86:6c:
+         66:96:23:53:98:74:55:96:a3:2a:c8:14:e2:f7:98:dd:59:8b:
+         8b:3f:61:11:db:be:c8:de:23:ed:d5:e9:4c:e0:90:a8:dc:dd:
+         ae:17:de:22:82:db:7f:9f:01:2c:b5:e0:c1:ae:b4:b1:6e:52:
+         96:de:24:0b:41:01:23:cb:34:bb:8d:95:1f:38:cf:42:b0:db:
+         4c:ea:e1:d3:8d:52:6c:93:cd:92:7c:7f:fa:0a:c4:00:81:a3:
+         64:b5:d0:39:83:e0:5f:d7:a1:6c:87:66:1b:91:e7:76:5a:b8:
+         47:1d:69:a6:f6:8f:00:c8:1a:06:13:6b:41:e0:91:8e:bf:e3:
+         8a:b2:44:a9:11:e9:8d:62:be:90:cc:d8:ff:16:c8:b7:16:5c:
+         d2:43:f2:f4
+-----BEGIN CERTIFICATE-----
+MIIFKTCCBBGgAwIBAgIBAjANBgkqhkiG9w0BAQsFADCBpDELMAkGA1UEBhMCVVMx
+CzAJBgNVBAgTAkRDMRMwEQYDVQQHEwpXYXNoaW5ndG9uMREwDwYDVQQKEwhXb3Jt
+aG9sZTEUMBIGA1UECxMLV29ybWhvbGVWUE4xETAPBgNVBAMTCFdvcm1ob2xlMRAw
+DgYDVQQpEwdFYXN5UlNBMSUwIwYJKoZIhvcNAQkBFhZ0aG9tYXMuai5sZWVAZ21h
+aWwuY29tMB4XDTEzMTIxMDIwMzQwMloXDTIzMTIwODIwMzQwMlowgasxCzAJBgNV
+BAYTAlVTMQswCQYDVQQIEwJEQzETMBEGA1UEBxMKV2FzaGluZ3RvbjERMA8GA1UE
+ChMIV29ybWhvbGUxFDASBgNVBAsTC1dvcm1ob2xlVlBOMRgwFgYDVQQDEw93b3Jt
+aG9sZS1jbGllbnQxEDAOBgNVBCkTB0Vhc3lSU0ExJTAjBgkqhkiG9w0BCQEWFnRo
+b21hcy5qLmxlZUBnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+AoIBAQCae7VyCTzZ1eyJ0kqThu7V5Po1leBYLrdzDvjdQyt9VJEZ3TGuPk9W6OJb
+neccW87sDyM7/a1FOV68s2NW8P9N9hIG6YAqbnpW08eAxmL0XRkwoW4WI1I+3fjx
+zSjOWmhJof4PmobhKkgSFcO6jI2iApLzsRUws1Pk1sYbsVSwqypMyr5cOegBVFp6
+saLxTcAqG5tiHY8NiMuw9tM7mI8ylM+CrNQdFlijVd5GugSNJSYOYAxO4HJs25oc
+jshHxU0j0e+4RblNCV9C8IRA/4ssGKG8NFWm7W9U7LuOKej4ZcVCsaftiXAkkSOh
+DVaC4GB745Om8OB5y8xLDuIJW41XAgMBAAGjggFbMIIBVzAJBgNVHRMEAjAAMC0G
+CWCGSAGG+EIBDQQgFh5FYXN5LVJTQSBHZW5lcmF0ZWQgQ2VydGlmaWNhdGUwHQYD
+VR0OBBYEFD/m5mP0BUcWT3UUo/JStaChNauIMIHZBgNVHSMEgdEwgc6AFIas8ujf
+cVhn7rPgQjK4DWDC3+KLoYGqpIGnMIGkMQswCQYDVQQGEwJVUzELMAkGA1UECBMC
+REMxEzARBgNVBAcTCldhc2hpbmd0b24xETAPBgNVBAoTCFdvcm1ob2xlMRQwEgYD
+VQQLEwtXb3JtaG9sZVZQTjERMA8GA1UEAxMIV29ybWhvbGUxEDAOBgNVBCkTB0Vh
+c3lSU0ExJTAjBgkqhkiG9w0BCQEWFnRob21hcy5qLmxlZUBnbWFpbC5jb22CCQDN
+7TOXLbZU6TATBgNVHSUEDDAKBggrBgEFBQcDAjALBgNVHQ8EBAMCB4AwDQYJKoZI
+hvcNAQELBQADggEBAFqAVtKS8LUn6Zo/aF4QZmGw0VSmM1l4ZfaYD4HWH4q0bK7R
+7+EA6A2VyX+3f5c8xNzCSKiXRd9c7kTqIi1QlxDKdAmBQ4akFjW9R1TrBMoM0pq2
+xnPYnhZuKNJYJYLa3aeb/tm8MrAtSwOGbGaWI1OYdFWWoyrIFOL3mN1Zi4s/YRHb
+vsjeI+3V6UzgkKjc3a4X3iKC23+fASy14MGutLFuUpbeJAtBASPLNLuNlR84z0Kw
+20zq4dONUmyTzZJ8f/oKxACBo2S10DmD4F/XoWyHZhuR53ZauEcdaab2jwDIGgYT
+a0HgkY6/44qyRKkR6Y1ivpDM2P8WyLcWXNJD8vQ=
+-----END CERTIFICATE-----
