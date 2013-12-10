@@ -1,8 +1,9 @@
-import boto.ec2
-import os
+import boto.ec2, boto.manage.cmdshell
+import os, time
 from urllib import urlopen
 
 AMI_ID = 'ami-64340421'
+AMI_USER_NAME = 'root'
 KEY_PAIR_NAME = 'wormhole-kp'
 SECURITY_GROUP_NAME = 'wormhole-sg'
 INSTANCE_SIZE = 't1.micro'
@@ -16,6 +17,7 @@ class Wormhole(object):
 		self.security_group = None
 		self.key_pair = None
 		self.public_ip = None
+		self.reservation = None
 
 	def get_public_ip(self):
 		self.public_ip = urlopen('http://bot.whatismyipaddress.com/').read().strip()
@@ -33,13 +35,16 @@ class Wormhole(object):
 			self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
 			return self.security_group	
 
+	def _key_path(self):
+		return "%s/%s.pem" % (KEY_PAIR_PATH, KEY_PAIR_NAME)
+
 	def create_key_pair_if_necessary(self):
 		for kp in self.conn.get_all_key_pairs():
 			if kp.name==KEY_PAIR_NAME:
 				self.key_pair = kp
 
 		# have we got both the KP record and the .pem file? if so, we're fine
-		if self.key_pair is not None and os.path.exists("%s/%s.pem" % (KEY_PAIR_PATH, KEY_PAIR_NAME)):
+		if self.key_pair is not None and os.path.exists(self._key_path()):
 			return self.key_pair
 		
 		# if not, delete broken half-KPs
@@ -68,7 +73,17 @@ class Wormhole(object):
 	def start(self):
 		self.create_key_pair_if_necessary()
 		self.enable_access()		
-		self.instances = self.conn.run_instances(AMI_ID, key_name=KEY_PAIR_NAME, instance_type=INSTANCE_SIZE, security_groups=[SECURITY_GROUP_NAME])
+		self.reservation = self.conn.run_instances(AMI_ID, key_name=KEY_PAIR_NAME, instance_type=INSTANCE_SIZE, security_groups=[SECURITY_GROUP_NAME])
+
+	def connect(self):
+		instance = self.reservation.instances[0]
+		print 'Waiting for instance...'
+		while instance.state!='running':
+			time.sleep(5)
+			instance.update()
+		print 'Instance is running.'
+		self.instance_ip = instance.ip_address
+		self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
 
 	def stop(self):
 		self.disable_access()
