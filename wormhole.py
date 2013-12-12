@@ -182,13 +182,14 @@ class Wormhole(object):
 
 	def check_tunnel_status(self):				
 		# read line without blocking
-		try:
-			line = self.tunnel_message_queue.get_nowait() # or q.get(timeout=.1)
-		except Empty:
-		    print('no output yet')
-		else: # got line
-		    self.tunnel_process_stdout += line
-		# perform tests against buffer of output
+		while True:
+			try:
+				line = self.tunnel_message_queue.get_nowait()
+			except Empty:
+				break
+			else: # got line
+		    	self.tunnel_process_stdout += line
+
 		return self.tunnel_process_stdout
 
 	def stop(self):
