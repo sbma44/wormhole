@@ -1,17 +1,9 @@
 import boto.ec2
-# import boto.manage.cmdshell
-import os, time, sqlite3
+import os, time, sqlite3, subprocess
 from urllib import urlopen
 
-AMI_USER_NAME = 'ec2-user'
-KEY_PAIR_NAME = 'wormhole-kp'
-SECURITY_GROUP_NAME = 'wormhole-sg'
-INSTANCE_SIZE = 't1.micro'
-KEY_PAIR_PATH = '.'
-SQLITE_DB = 'wormhole.db'
-
 def find_all_global_instances():
-	db = sqlite3.connect(SQLITE_DB)
+	db = sqlite3.connect(self.SQLITE_DB)
 	cursor = db.cursor()
 	targets = []
 	for (name, region_id) in cursor.execute("SELECT name, id FROM regions"):
@@ -19,10 +11,13 @@ def find_all_global_instances():
 	db.close()
 
 	for (name, region_id) in targets:
-		print region_id
 		wh = Wormhole(region_id)
 		for instance in wh.conn.get_only_instances():
 			wh.record_instance(instance)
+
+def stop_all_global_instances():
+	db = sqlite3.connect(self.SQLITE_DB)
+	db.close()
 
 class Wormhole(object):
 	"""Creates EC2 instances for OpenVPN tunneling"""
@@ -44,10 +39,8 @@ class Wormhole(object):
 		self.reservation = None		
 
 	def record_instance(self, instance):
-		print dir(instance)
-		db = sqlite3.connect(SQLITE_DB)
+		db = sqlite3.connect(self.SQLITE_DB)
 		cursor = db.cursor()
-		print instance.id
 		cursor.execute("DELETE FROM instances WHERE instance_id=?", (instance.id,))
 		cursor.execute("INSERT INTO instances (instance_id, timestamp, region, ip, state, public_dns_name, instance_type, image_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", (instance.id, int(time.time()), self.region, instance.ip_address, instance.state, instance.public_dns_name, instance.instance_type, instance.image_id))
 		db.commit()
@@ -63,21 +56,27 @@ class Wormhole(object):
 	def _get_or_create_security_group(self):
 		security_groups = self.conn.get_all_security_groups()
 		for wormhole_sg in security_groups:			
-			if wormhole_sg.name==SECURITY_GROUP_NAME:
+			if wormhole_sg.name==self.SECURITY_GROUP_NAME:
+				# remove orphan SGs with port 1194 open
+				for rule in wormhole_sg.rules:					
+					if int(rule.from_port)==1194 and int(rule.to_port)==1194 and rule.ip_protocol.lower().strip()=='udp':
+						wormhole_sg.delete()
+						wormhole_sg = None
 				self.security_group = wormhole_sg
-				return self.security_group
-
-		if self.security_group is None:
-			self.security_group = self.conn.create_security_group(SECURITY_GROUP_NAME, 'Wormhole VPN project')
+		
+		if self.security_group is not None:
+			return self.security_group
+		else:
+			self.security_group = self.conn.create_security_group(self.SECURITY_GROUP_NAME, 'Wormhole VPN project')
 			self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
 			return self.security_group	
 
 	def _key_path(self):
-		return "%s/%s.pem" % (KEY_PAIR_PATH, KEY_PAIR_NAME)
+		return "%s/%s.pem" % (self.KEY_PAIR_PATH, self.KEY_PAIR_NAME)
 
 	def create_key_pair_if_necessary(self):
 		for kp in self.conn.get_all_key_pairs():
-			if kp.name==KEY_PAIR_NAME:
+			if kp.name==self.KEY_PAIR_NAME:
 				self.key_pair = kp
 
 		# have we got both the KP record and the .pem file? if so, we're fine
@@ -87,11 +86,11 @@ class Wormhole(object):
 		# if not, delete broken half-KPs
 		elif self.key_pair is not None:
 			self.key_pair.delete()
-		elif os.path.exists(KEY_PAIR_PATH):
-			os.unlink(KEY_PAIR_PATH)
+		elif os.path.exists(self.KEY_PAIR_PATH):
+			os.unlink(self.KEY_PAIR_PATH)
 
-		self.key_pair = self.conn.create_key_pair(KEY_PAIR_NAME)
-		self.key_pair.save(KEY_PAIR_PATH)
+		self.key_pair = self.conn.create_key_pair(self.KEY_PAIR_NAME)
+		self.key_pair.save(self.KEY_PAIR_PATH)
 		
 		return self.key_pair
 
@@ -115,7 +114,7 @@ class Wormhole(object):
 		self.enable_access()		
 
 		print 'Launching instance...'
-		self.reservation = self.conn.run_instances(AMI_ID, key_name=KEY_PAIR_NAME, instance_type=INSTANCE_SIZE, security_groups=[SECURITY_GROUP_NAME])
+		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.SECURITY_GROUP_NAME])
 		instance = self.reservation.instances[0]
 		
 		print 'Waiting for instance...'
@@ -127,7 +126,6 @@ class Wormhole(object):
 		self.instance_ip = instance.ip_address
 
 		
-
 	# def connect(self):
 	# 	self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
 
@@ -151,19 +149,30 @@ class Wormhole(object):
 			'--cd %s/openvpn' % os.getcwd()
 		]
 		self.tunnel_process = subprocess.Popen(openvpn_call, stdout=subprocess.PIPE)
+		self.tunnel_process_stdout = ''
 		return self.tunnel_process
 
+	def check_tunnel_status(self):				
+		while True:
+			print 'refreshing buffer'
+			buf = self.tunnel_process.stdout.read()
+			if len(buf)==0:
+				break
+			self.tunnel_process_stdout += buf
+
+		# perform tests against buffer of output
+		return self.tunnel_process_stdout
 
 	def stop(self):
 		self.disable_access()
 		for reservation in self.conn.get_all_reservations():
 			for instance in reservation.instances:
-				if instance.image_id==AMI_ID:
+				if instance.image_id==self.REGIONS[self.region]['ami_id']:
 					instance.terminate()
 
 	REGIONS = {
 		'us-east-1': {
-			u'ami_id': u'',
+			u'ami_id': u'ami-034c636a',
 	  		u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.us-east-1.amazonaws.com',
 			u'lat': u'38.13',
@@ -238,6 +247,16 @@ class Wormhole(object):
 			u'short_name': u'Sao Paulo'
 		}
 	}
+
+	AMI_USER_NAME = 'ec2-user'
+	KEY_PAIR_NAME = 'wormhole-kp'
+	SECURITY_GROUP_NAME = 'wormhole-sg'
+	INSTANCE_SIZE = 't1.micro'
+	KEY_PAIR_PATH = '.'
+	SQLITE_DB = 'wormhole.db'
+
+
+
 
 wh = None
 
