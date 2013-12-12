@@ -171,6 +171,7 @@ class Wormhole(object):
 			'--cd',
 			'%s/openvpn' % os.getcwd()
 		]
+
 		self.tunnel_process = subprocess.Popen(openvpn_call, stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
 		self.tunnel_process_stdout = ''		
 		self.tunnel_message_queue = Queue()
@@ -188,7 +189,7 @@ class Wormhole(object):
 			except Empty:
 				break
 			else: # got line
-		    	self.tunnel_process_stdout += line
+				self.tunnel_process_stdout += line
 
 		return self.tunnel_process_stdout
 
