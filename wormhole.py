@@ -1,5 +1,5 @@
 import boto.ec2
-import os, time, sqlite3, subprocess
+import os, sys, time, sqlite3, subprocess
 from threading import Thread
 from urllib import urlopen
 from threading  import Thread
@@ -147,16 +147,24 @@ class Wormhole(object):
 		openvpn_call = [
 			'openvpn',
 			'--client',
-			'--dev tun',
-			'--proto udp',
-			'--remote %s 1194' % self.instance_ip,
-			'--resolv-retry infinite',
+			'--dev',
+			'tun',
+			'--proto',
+			'udp',
+			'--remote',
+			self.instance_ip,
+			'1194',
+			'--resolv-retry',
+			'infinite',
 			'--nobind',
 			'--persist-key',
 			'--persist-tun',
-			'--ca ca.crt',
-			'--cert client.crt',
-			'--key client.key',
+			'--ca',
+			'ca.crt',
+			'--cert',
+			'client.crt',
+			'--key',
+			'client.key',
 			'--comp-lzo',
 			'--verb',
 			'3',
