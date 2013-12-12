@@ -1,6 +1,19 @@
 import boto.ec2
 import os, time, sqlite3, subprocess
+from threading import Thread
 from urllib import urlopen
+from threading  import Thread
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty  # python 3.x
+
+ON_POSIX = 'posix' in sys.builtin_module_names
+
+def enqueue_output(out, queue):
+    for line in iter(out.readline, b''):
+        queue.put(line)
+    out.close()
 
 def find_all_global_instances():
 	db = sqlite3.connect(self.SQLITE_DB)
@@ -132,7 +145,7 @@ class Wormhole(object):
 	def launch_tunnel_process(self):
 		# openvpn process call
 		openvpn_call = [
-			'openvpn'
+			'openvpn',
 			'--client',
 			'--dev tun',
 			'--proto udp',
@@ -145,21 +158,28 @@ class Wormhole(object):
 			'--cert client.crt',
 			'--key client.key',
 			'--comp-lzo',
-			'--verb 3',
-			'--cd %s/openvpn' % os.getcwd()
+			'--verb',
+			'3',
+			'--cd',
+			'%s/openvpn' % os.getcwd()
 		]
-		self.tunnel_process = subprocess.Popen(openvpn_call, stdout=subprocess.PIPE)
-		self.tunnel_process_stdout = ''
-		return self.tunnel_process
+		self.tunnel_process = subprocess.Popen(openvpn_call, stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
+		self.tunnel_process_stdout = ''		
+		self.tunnel_message_queue = Queue()
+		
+		t = Thread(target=enqueue_output, args=(self.tunnel_process.stdout, self.tunnel_message_queue))
+		t.daemon = True # thread dies with the program
+		t.start()
+
 
 	def check_tunnel_status(self):				
-		while True:
-			print 'refreshing buffer'
-			buf = self.tunnel_process.stdout.read()
-			if len(buf)==0:
-				break
-			self.tunnel_process_stdout += buf
-
+		# read line without blocking
+		try:
+			line = self.tunnel_message_queue.get_nowait() # or q.get(timeout=.1)
+		except Empty:
+		    print('no output yet')
+		else: # got line
+		    self.tunnel_process_stdout += line
 		# perform tests against buffer of output
 		return self.tunnel_process_stdout
 
