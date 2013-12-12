@@ -1,9 +1,0 @@
-name,short_name,id,domain,connection_type,ami_id,lat,lon
-US East (Northern Virginia) Region,Virginia,us-east-1,ec2.us-east-1.amazonaws.com,HTTP and HTTPS,,38.13,-78.45
-US West (Oregon) Region,Oregon,us-west-2,ec2.us-west-2.amazonaws.com,HTTP and HTTPS,,46.15,-123.88
-US West (Northern California) Region,California,us-west-1,ec2.us-west-1.amazonaws.com,HTTP and HTTPS,ami-fc2616b9,41.48,-120.53
-EU (Ireland) Region,Ireland,eu-west-1,ec2.eu-west-1.amazonaws.com,HTTP and HTTPS,,53,-8
-Asia Pacific (Singapore) Region,Singapore,ap-southeast-1,ec2.ap-southeast-1.amazonaws.com,HTTP and HTTPS,,1.37,103.8
-Asia Pacific (Sydney) Region,Sydney,ap-southeast-2,ec2.ap-southeast-2.amazonaws.com,HTTP and HTTPS,,-33.86,151.2
-Asia Pacific (Tokyo) Region,Tokyo,ap-northeast-1,ec2.ap-northeast-1.amazonaws.com,HTTP and HTTPS,,35.41,139.42
-South America (Sao Paulo) Region,Sao Paulo,sa-east-1,ec2.sa-east-1.amazonaws.com,HTTP and HTTPS,,-23.34,-46.38
