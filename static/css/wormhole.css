@@ -2,3 +2,95 @@
 	padding-left: 0;
 	text-align: center;
 }
+
+#launch-checklist {
+	font-size: 2em;
+	list-style-type: none;
+	color: #ccc;
+	margin-left: 3.5em;
+}
+
+#launch-checklist .active {
+	color: rgb(75, 75, 75);
+}
+
+#launch-checklist .success {
+	color: rgb(28, 184, 65);
+}
+
+
+#launch-checklist i, #menu i {
+	margin-right: 1em;
+}
+
+.pure-button-success,
+.pure-button-error,
+.pure-button-warning,
+.pure-button-secondary {
+	font-size: 2em;
+    color: white;
+    border-radius: 4px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.pure-success {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+
+.pure-button-error {
+    background: rgb(202, 60, 60); /* this is a maroon */
+}
+
+.pure-button-warning {
+    background: rgb(223, 117, 20); /* this is an orange */
+}
+
+.pure-button-secondary {
+    background: rgb(66, 184, 221); /* this is a light blue */
+}
+
+.control-group-message {
+	margin-left: 10em;
+}
+
+#credentials-verified {
+	color: rgb(28, 184, 65);
+}
+
+#credentials-success {
+	display: none;	
+	color: rgb(28, 184, 65);
+}
+
+#credentials-error {
+	display: none;
+	color: rgb(202, 60, 60);
+}
+
+#credential-check-spinner {
+	visibility: hidden;
+	position: relative;
+	top: 8px;
+	left: 7px;
+}
+
+.region_choice {
+	margin-bottom: 0.5em;
+}
+.region_choice input {
+	margin-right: 1em;
+	padding-bottom: 3px;
+}
+
+.region_choice span {
+	position: relative;
+	top: 2px;
+}
+
+#submit_form {
+	margin-top: 1em;
+}
+
+#delete_credentials {
+	margin-top: 1em;
+}

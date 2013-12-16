@@ -1,5 +1,5 @@
 import boto.ec2
-import os, sys, time, sqlite3, subprocess
+import os, sys, time, sqlite3, subprocess, json
 from threading import Thread
 from urllib import urlopen
 from threading  import Thread
@@ -30,11 +30,20 @@ def find_all_global_instances():
 
 def stop_all_global_instances():
 	db = sqlite3.connect(self.SQLITE_DB)
+	# TODO
 	db.close()
+
+def get_valid_regions():
+	r = Wormhole.REGIONS.copy()
+	for k in Wormhole.REGIONS:
+		if len(Wormhole.REGIONS[k].get('ami_id', ''))==0:
+			del r[k]
+	return r
+
 
 class Wormhole(object):
 	"""Creates EC2 instances for OpenVPN tunneling"""
-	def __init__(self, region='us-west-1'):
+	def __init__(self, region='us-west-1', aws_access_key=None, aws_secret_key=None):
 		super(Wormhole, self).__init__()		
 
 		if not self.REGIONS.get(region):
@@ -43,13 +52,21 @@ class Wormhole(object):
 		if len(self.REGIONS.get(region, {}).get('ami_id', ''))==0:
 			raise Exception('Wormhole AMI not yet available in region %s.' % region)
 
-		(aws_access_key, aws_secret_key) = self._get_credentials()
+		if None in (aws_access_key, aws_secret_key): 
+			(aws_access_key, aws_secret_key) = (os.getenv('AWS_ACCESS_KEY'), os.getenv('AWS_SECRET_KEY'))
 		self.conn = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)					
 		self.region = region
 		self.security_group = None
 		self.key_pair = None
 		self.public_ip = None
 		self.reservation = None		
+
+	def validate_credentials(self):
+		try:
+			self.conn.get_all_regions()
+		except:
+			return False
+		return True
 
 	def record_instance(self, instance):
 		db = sqlite3.connect(self.SQLITE_DB)
@@ -58,9 +75,6 @@ class Wormhole(object):
 		cursor.execute("INSERT INTO instances (instance_id, timestamp, region, ip, state, public_dns_name, instance_type, image_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", (instance.id, int(time.time()), self.region, instance.ip_address, instance.state, instance.public_dns_name, instance.instance_type, instance.image_id))
 		db.commit()
 		db.close()
-
-	def _get_credentials(self):
-		return (os.getenv('AWS_ACCESS_KEY'), os.getenv('AWS_SECRET_KEY'))
 
 	def get_public_ip(self):
 		self.public_ip = urlopen('http://bot.whatismyipaddress.com/').read().strip()
@@ -72,7 +86,7 @@ class Wormhole(object):
 			if wormhole_sg.name==self.SECURITY_GROUP_NAME:
 				# remove orphan SGs with port 1194 open
 				for rule in wormhole_sg.rules:					
-					if int(rule.from_port)==1194 and int(rule.to_port)==1194 and rule.ip_protocol.lower().strip()=='udp':
+					if int(rule.from_port)==self.OPENVPN_PORT and int(rule.to_port)==self.OPENVPN_PORT and rule.ip_protocol.lower().strip()=='udp':
 						wormhole_sg.delete()
 						wormhole_sg = None
 				self.security_group = wormhole_sg
@@ -110,14 +124,14 @@ class Wormhole(object):
 	def enable_access(self):
 		if self.security_group is None:
 			self._get_or_create_security_group()
-		self.security_group.authorize(ip_protocol='udp', from_port=1194, to_port=1194, cidr_ip='%s/32' % self.get_public_ip())
+		self.security_group.authorize(ip_protocol='udp', from_port=self.OPENVPN_PORT, to_port=self.OPENVPN_PORT, cidr_ip='%s/32' % self.get_public_ip())
 
 	def disable_access(self):
 		if self.security_group is None:
 			self._get_or_create_security_group()
 		if self.public_ip is None:
 			self.get_public_ip()
-		self.security_group.revoke(ip_protocol='udp', from_port=1194, to_port=1194, cidr_ip='%s/32' % self.public_ip)
+		self.security_group.revoke(ip_protocol='udp', from_port=self.OPENVPN_PORT, to_port=self.OPENVPN_PORT, cidr_ip='%s/32' % self.public_ip)
 
 	def start(self):
 		print 'Setting up key pair...'
@@ -142,7 +156,7 @@ class Wormhole(object):
 	# def connect(self):
 	# 	self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
 
-	def launch_tunnel_process(self):
+	def start_openvpn(self):
 		# openvpn process call
 		openvpn_call = [
 			'openvpn',
@@ -153,7 +167,7 @@ class Wormhole(object):
 			'udp',
 			'--remote',
 			self.instance_ip,
-			'1194',
+			self.OPENVPN_PORT,
 			'--resolv-retry',
 			'infinite',
 			'--nobind',
@@ -180,6 +194,21 @@ class Wormhole(object):
 		t.daemon = True # thread dies with the program
 		t.start()
 
+	def stop_openvpn(self):
+		self.tunnel_process.terminate()
+		self.tunnel_process.wait()
+
+	def start_routing(self):
+		f = open('iptables-tunnel.rules', 'r')
+		rules = f.read()
+		f.close()
+		envoy.run('/sbin/iptables-restore -c', data=rules, timeout=2)
+
+	def stop_routing(self):
+		f = open('iptables-nat.rules', 'r')
+		rules = f.read()
+		f.close()
+		envoy.run('/sbin/iptables-restore -c', data=rules, timeout=2)
 
 	def check_tunnel_status(self):				
 		# read line without blocking
@@ -191,7 +220,12 @@ class Wormhole(object):
 			else: # got line
 				self.tunnel_process_stdout += line
 
-		return self.tunnel_process_stdout
+		if 'initialization sequence completed' in self.tunnel_process_stdout.lower():
+			return 'ready'
+		else:
+			return 'working'
+
+		#self.tunnel_process_stdout
 
 	def stop(self):
 		self.disable_access()
@@ -284,28 +318,4 @@ class Wormhole(object):
 	INSTANCE_SIZE = 't1.micro'
 	KEY_PAIR_PATH = '.'
 	SQLITE_DB = 'wormhole.db'
-
-
-
-
-wh = None
-
-def main():
-	print 'Creating WH object...'
-	wh = Wormhole()
-	print 'Starting instance...'
-	wh.start()
-	print 'done.'
-
-def cleanup():
-	if wh is None:
-		wh = Wormhole()
-	print 'Stopping instance...'
-	wh.stop()
-	print 'done.'
-
-if __name__ == '__main__':
-	main()
-	x = raw_input('Press <ENTER> to continue')
-	cleanup()
-	
+	OPENVPN_PORT = 1194
