@@ -56,7 +56,7 @@ $def with (valid_credentials, valid_regions, current_region)
 
 		<div class="content">		
 
-		<form class="pure-form pure-form-aligned" method="POST">		
+		<form class="pure-form pure-form-aligned" id="settings-form" method="POST">		
 			<fieldset>
 				<legend>Amazon Web Services Credentials</legend>
 				
@@ -87,7 +87,7 @@ $if valid_credentials>0:
 			$$.post('/ajax/validate', {'access_key': $$('#access_key').val(), 'secret_key': $$('#secret_key').val()}, function(result) {
 				$$('#credential-check-spinner').hide();
 				if(result.success){
-					$$('#credentials-success').slideDown();
+					$$('#validate_credentials').fadeOut(400, function() { $$('#credentials-success').fadeIn(); });					
 				}
 				else {
 					$$('#credentials-error').slideDown();
@@ -98,12 +98,13 @@ $if valid_credentials>0:
 	</script>
 	        
 $else:
-	<div class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> Credentials confirmed</div>
+	<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> Credentials confirmed</span></div>
+	<div>Need to change your current credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
 	<input id="access_key" name="access_key" type="hidden" value=""/>
 	<input id="secret_key" name="secret_key" type="hidden" value=""/>	
 	<div class="pure-control-group">
 		<label for="save_credentials">&nbsp;</label>
-		<button type="submit" id="delete_credentials" class="pure-button pure-button-primary">Delete Credentials</button>
+		<!-- <button type="submit" id="delete_credentials" class="pure-button pure-button-primary">Delete Credentials</button> -->
 	</div>
 
 	<script type="text/javascript">
@@ -111,7 +112,8 @@ $else:
 		$$('#delete_credentials').click(function(){
 			$$('#access_key').val('DELETE');
 			$$('#secret_key').val('DELETE');
-			return true;
+			$$('#settings-form').submit();
+			return false;
 		});
 	});
 	</script>

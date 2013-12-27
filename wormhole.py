@@ -15,23 +15,28 @@ def enqueue_output(out, queue):
         queue.put(line)
     out.close()
 
-def find_all_global_instances():
-	db = sqlite3.connect(self.SQLITE_DB)
-	cursor = db.cursor()
-	targets = []
-	for (name, region_id) in cursor.execute("SELECT name, id FROM regions"):
-		targets.append((name, region_id))
-	db.close()
+# def find_all_global_instances():
+# 	db = sqlite3.connect(self.SQLITE_DB)
+# 	cursor = db.cursor()
+# 	targets = []
+# 	for (name, region_id) in cursor.execute("SELECT name, id FROM regions"):
+# 		targets.append((name, region_id))
+# 	db.close()
 
-	for (name, region_id) in targets:
-		wh = Wormhole(region_id)
-		for instance in wh.conn.get_only_instances():
-			wh.record_instance(instance)
+# 	for (name, region_id) in targets:
+# 		wh = Wormhole(region_id)
+# 		for instance in wh.conn.get_only_instances():
+# 			wh.record_instance(instance)
 
 def stop_all_global_instances():
-	db = sqlite3.connect(self.SQLITE_DB)
-	# TODO
-	db.close()
+	for (region_id, region_values) in Wormhole.REGIONS.items():
+		ami_id = region_values.get('ami_id', '')
+		if len(ami_id)==0:
+			continue
+		wh = Wormhole(region_id)
+		for instance in wh.conn.get_only_instances():
+			if instance.image_id==ami_id:
+				instance.terminate()
 
 def get_valid_regions():
 	r = Wormhole.REGIONS.copy()
@@ -68,33 +73,44 @@ class Wormhole(object):
 			return False
 		return True
 
-	def record_instance(self, instance):
-		db = sqlite3.connect(self.SQLITE_DB)
-		cursor = db.cursor()
-		cursor.execute("DELETE FROM instances WHERE instance_id=?", (instance.id,))
-		cursor.execute("INSERT INTO instances (instance_id, timestamp, region, ip, state, public_dns_name, instance_type, image_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", (instance.id, int(time.time()), self.region, instance.ip_address, instance.state, instance.public_dns_name, instance.instance_type, instance.image_id))
-		db.commit()
-		db.close()
+	# def record_instance(self, instance):
+	# 	db = sqlite3.connect(self.SQLITE_DB)
+	# 	cursor = db.cursor()
+	# 	cursor.execute("DELETE FROM instances WHERE instance_id=?", (instance.id,))
+	# 	cursor.execute("INSERT INTO instances (instance_id, timestamp, region, ip, state, public_dns_name, instance_type, image_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", (instance.id, int(time.time()), self.region, instance.ip_address, instance.state, instance.public_dns_name, instance.instance_type, instance.image_id))
+	# 	db.commit()
+	# 	db.close()
 
 	def get_public_ip(self):
 		self.public_ip = urlopen('http://bot.whatismyipaddress.com/').read().strip()
 		return self.public_ip
 
 	def _get_or_create_security_group(self):
+		# by default, try to use the easy security group name
+		# however, in some situations (eg terminated but not yet
+		# destroyed instances), deleting orphan groups will temporarily
+		# fail. In this circumstance, modify the SG name
+		novel_security_group_name = self.SECURITY_GROUP_NAME
+
 		security_groups = self.conn.get_all_security_groups()
 		for wormhole_sg in security_groups:			
+			print wormhole_sg.name
 			if wormhole_sg.name==self.SECURITY_GROUP_NAME:
 				# remove orphan SGs with port 1194 open
 				for rule in wormhole_sg.rules:					
 					if int(rule.from_port)==self.OPENVPN_PORT and int(rule.to_port)==self.OPENVPN_PORT and rule.ip_protocol.lower().strip()=='udp':
-						wormhole_sg.delete()
+						try:
+							wormhole_sg.delete()
+						except:
+							print "Tried to delete security group %s but could not" % wormhole_sg.name
+							novel_security_group_name = novel_security_group_name + "-%d" % time.time()
 						wormhole_sg = None
 				self.security_group = wormhole_sg
 		
 		if self.security_group is not None:
 			return self.security_group
 		else:
-			self.security_group = self.conn.create_security_group(self.SECURITY_GROUP_NAME, 'Wormhole VPN project')
+			self.security_group = self.conn.create_security_group(novel_security_group_name, 'Wormhole VPN project')
 			self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
 			return self.security_group	
 
@@ -133,7 +149,7 @@ class Wormhole(object):
 			self.get_public_ip()
 		self.security_group.revoke(ip_protocol='udp', from_port=self.OPENVPN_PORT, to_port=self.OPENVPN_PORT, cidr_ip='%s/32' % self.public_ip)
 
-	def start(self):
+	def start_instance(self):
 		print 'Setting up key pair...'
 		self.create_key_pair_if_necessary()
 		
@@ -142,15 +158,15 @@ class Wormhole(object):
 
 		print 'Launching instance...'
 		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.SECURITY_GROUP_NAME])
-		instance = self.reservation.instances[0]
+		self.instance = self.reservation.instances[0]
 		
 		print 'Waiting for instance...'
-		while instance.state!='running':
+		while self.instance.state!='running':
 			time.sleep(5)
-			instance.update()
+			self.instance.update()
 		
 		print 'Instance is running.'
-		self.instance_ip = instance.ip_address
+		self.instance_ip = self.instance.ip_address
 
 		
 	# def connect(self):

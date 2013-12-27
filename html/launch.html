@@ -1,3 +1,4 @@
+$def with (open_tunnel, region)
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="Wormhole admin interface">
 
-    <title>Wormhole</title>
+    <title>Launch | Wormhole</title>
 
 	<link rel="stylesheet" href="/static/css/pure-min.css">
 	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
@@ -50,18 +51,51 @@
 
 		<div class="header">
 		    <h1>Open Wormhole</h1>		  
-		    <h2>Create a new tunnel.</h2>		  
+		    <h2>Create a new tunnel to $region.</h2>		  
 		</div>
 
-		<div class="content">
-			<ul id="launch-checklist">
-				<li class="success"><i class="fa fa-check-circle"></i>Checking for orphan instances</li>
-				<li class="active"><i class="fa fa-circle"></i>Starting instance</li>
-				<li><i class="fa fa-circle-o"></i>Creating VPN tunnel</li>
-				<li><i class="fa fa-circle-o"></i>Routing traffic through tunnel</li>
-			</ul>
+		<div class="content" id="launch-content">
+			$if not open_tunnel:
+				<ul id="launch-checklist">
+					<li class="pending" id="settings"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Validating settings</li>
+					<li class="pending" id="orphans"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Checking for orphan instances</li>
+					<li class="pending" id="instance"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Starting instance</li>
+					<li class="pending" id="booted"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Instance boot sequence complete</li>
+					<li class="pending" id="openvpn"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Creating VPN tunnel</li>
+					<li class="pending" id="routing"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Routing traffic through tunnel</li>
+				</ul>
+
+				<a class="pure-button pure-button-primary" id="open-wormhole" href="#">Open Wormhole</a>
+
+				<script type="text/javascript">
+				var interval = null;
+				$$(function(){
+					$$('a#open-wormhole').click(function(){
+						$$.post('/launch', {'activate': 1}, function(data){
+							if(data.result=='error'){
+								alert('Error detected.');
+							}
+							else if(data.result=='already open'){
+								alert('Tunnel is already open.');
+							}else if(data.result=='started'){
+								interval = window.setInterval(function(){
+									$$.get('/ajax/launch-status', function(data){
+										console.log(data);
+										for(var stepname in data){
+											$$('li#' + stepname).removeClass('working error ok pending').addClass(data[stepname]);
+											if(data[stepname]=='error')
+												window.clearInterval(interval);
+										}
+									});
+								}, 1000);
+							}
+						});
+					});
+				});
+				</script>
+			$else:
+				a tunnel is already open!
     		
-    		<!-- <a class="pure-button pure-button-success">Wormhole Open</a> -->
     	</div>
     </div>
 </div>

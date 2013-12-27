@@ -3,6 +3,8 @@
 	text-align: center;
 }
 
+#launch-content .pure-button-primary { font-size: 1.5em;}
+
 #launch-checklist {
 	font-size: 2em;
 	list-style-type: none;
@@ -10,18 +12,22 @@
 	margin-left: 3.5em;
 }
 
-#launch-checklist .active {
+#launch-checklist .working {
 	color: rgb(75, 75, 75);
 }
 
-#launch-checklist .success {
+#launch-checklist .ok {
 	color: rgb(28, 184, 65);
 }
 
+#launch-checklist .error {
+	color: rgb(202, 60, 60);
+}
 
 #launch-checklist i, #menu i {
 	margin-right: 1em;
 }
+
 
 .pure-button-success,
 .pure-button-error,
@@ -33,7 +39,7 @@
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
-.pure-success {
+.pure-button-success, .pure-success {
     background: rgb(28, 184, 65); /* this is a green */
 }
 
@@ -94,3 +100,22 @@
 #delete_credentials {
 	margin-top: 1em;
 }
+
+#launch-checklist .ok .fa-circle-o, 
+#launch-checklist .ok .fa-circle, 
+#launch-checklist .ok .fa-exclamation-circle, 
+#launch-checklist .working .fa-circle-o, 
+#launch-checklist .working .fa-check-circle,
+#launch-checklist .working .fa-exclamation-circle, 
+#launch-checklist .pending .fa-circle,
+#launch-checklist .pending .fa-check-circle,
+#launch-checklist .pending .fa-exclamation-circle,
+#launch-checklist .error .fa-circle-o, 
+#launch-checklist .error .fa-circle, 
+#launch-checklist .error .fa-check-circle { display: none;}
+
+
+#launch-checklist .ok .fa-check-circle,
+#launch-checklist .working .fa-circle,
+#launch-checklist .pending .fa-circle-o,
+#launch-checklist .error .fa-exclamation-circle,  { display: inline;}
