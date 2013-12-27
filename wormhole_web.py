@@ -154,7 +154,7 @@ def open_wormhole():
     # stop all other instances
     update_status(mc, 'orphans', 'working')
     try:
-        wormhole.stop_all_global_instances()
+        wh.stop_all_global_instances()
     except Exception, e:
         update_status(mc, 'orphans', 'error')
         raise e

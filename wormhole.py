@@ -28,16 +28,6 @@ def enqueue_output(out, queue):
 # 		for instance in wh.conn.get_only_instances():
 # 			wh.record_instance(instance)
 
-def stop_all_global_instances():
-	for (region_id, region_values) in Wormhole.REGIONS.items():
-		ami_id = region_values.get('ami_id', '')
-		if len(ami_id)==0:
-			continue
-		wh = Wormhole(region_id)
-		for instance in wh.conn.get_only_instances():
-			if instance.image_id==ami_id:
-				instance.terminate()
-
 def get_valid_regions():
 	r = Wormhole.REGIONS.copy()
 	for k in Wormhole.REGIONS:
@@ -72,6 +62,16 @@ class Wormhole(object):
 		except:
 			return False
 		return True
+
+	def stop_all_global_instances(self):
+		for (region_id, region_values) in self.REGIONS.items():
+			ami_id = region_values.get('ami_id', '')
+			if len(ami_id)==0:
+				continue
+			wh = Wormhole(region_id)
+			for instance in wh.conn.get_only_instances():
+				if instance.image_id==ami_id:
+					instance.terminate()
 
 	# def record_instance(self, instance):
 	# 	db = sqlite3.connect(self.SQLITE_DB)
