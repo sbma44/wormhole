@@ -54,7 +54,9 @@ class Wormhole(object):
 		self.security_group = None
 		self.key_pair = None
 		self.public_ip = None
-		self.reservation = None		
+		self.reservation = None	
+		self.aws_access_key = aws_access_key
+		self.aws_secret_key = aws_secret_key	
 
 	def validate_credentials(self):
 		try:
@@ -68,7 +70,7 @@ class Wormhole(object):
 			ami_id = region_values.get('ami_id', '')
 			if len(ami_id)==0:
 				continue
-			wh = Wormhole(region_id)
+			wh = Wormhole(region_id, self.aws_access_key, self.aws_secret_key)
 			for instance in wh.conn.get_only_instances():
 				if instance.image_id==ami_id:
 					instance.terminate()
