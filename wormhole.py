@@ -88,33 +88,18 @@ class Wormhole(object):
 		return self.public_ip
 
 	def _get_or_create_security_group(self):
-		# by default, try to use the easy security group name
-		# however, in some situations (eg terminated but not yet
-		# destroyed instances), deleting orphan groups will temporarily
-		# fail. In this circumstance, modify the SG name
-		novel_security_group_name = self.SECURITY_GROUP_NAME
-
+		# clean up whatever wormhole security groups we can
 		security_groups = self.conn.get_all_security_groups()
 		for wormhole_sg in security_groups:			
-			print wormhole_sg.name
 			if wormhole_sg.name.startswith(self.SECURITY_GROUP_NAME):
-				# remove orphan SGs with port 1194 open
-				for rule in wormhole_sg.rules:					
-					if int(rule.from_port)==self.OPENVPN_PORT and int(rule.to_port)==self.OPENVPN_PORT and rule.ip_protocol.lower().strip()=='udp':
-						try:
-							wormhole_sg.delete()
-						except:
-							print "Tried to delete security group %s but could not" % wormhole_sg.name
-							novel_security_group_name = novel_security_group_name + "-%d" % time.time()
-						wormhole_sg = None
-				self.security_group = wormhole_sg
-		
-		if self.security_group is not None:
-			return self.security_group
-		else:
-			self.security_group = self.conn.create_security_group(novel_security_group_name, 'Wormhole VPN project')
-			self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
-			return self.security_group	
+				try:
+					wormhole_sg.delete()
+				except:
+					print "Tried to delete security group %s but could not" % wormhole_sg.name
+					novel_security_group_name = novel_security_group_name + "-%d" % time.time()				
+		self.security_group = self.conn.create_security_group("%s-%s" % (self.SECURITY_GROUP_NAME, str(int(time.time()))), 'Wormhole VPN project')
+		self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
+		return self.security_group	
 
 	def _key_path(self):
 		return "%s/%s.pem" % (self.KEY_PAIR_PATH, self.KEY_PAIR_NAME)
@@ -332,7 +317,7 @@ class Wormhole(object):
 
 	AMI_USER_NAME = 'ec2-user'
 	KEY_PAIR_NAME = 'wormhole-kp'
-	SECURITY_GROUP_NAME = 'wormhole-sg'
+	SECURITY_GROUP_NAME = 'wormhole-vpn-sg'
 	INSTANCE_SIZE = 't1.micro'
 	KEY_PAIR_PATH = '.'
 	SQLITE_DB = 'wormhole.db'
