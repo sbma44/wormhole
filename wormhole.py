@@ -210,6 +210,8 @@ class Wormhole(object):
 		self.instance.terminate()
 		try:
 			self.security_group.delete()
+		except:
+			pass
 
 	REGIONS = {
 		'us-east-1': {
