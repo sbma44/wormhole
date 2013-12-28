@@ -41,18 +41,18 @@ class launch:
                     t = Thread(target=open_wormhole)
                     t.daemon = True # thread dies with the program
                     t.start()
-                    return json.dumps({'result': 'started'})
+                    return json.dumps({'result': 'starting'})
                 except Exception, e:
                     return json.dumps({'result': 'error'})
                     raise e
             else:
                 return json.dumps({'result': 'already open'})
-        elif int(form.deactivate)==0:
+        elif int(form.deactivate)==1:            
             if open_tunnel:
-                # shut down somehow?
-                pass
+                mc.set('deactivate', True)
+                return json.dumps({'result': 'stopping'})
             else:
-                return json.dumps({'result': 'not open'})
+                return json.dumps({'result': 'already closed'})
 
 
 class settings(object):
@@ -208,6 +208,42 @@ def open_wormhole():
         time.sleep(0.25)
 
     # now reverse the procedure
+
+    # stop routing
+    update_status(mc, 'routing', 'working')
+    try:
+        wh.stop_routing()      
+    except Exception, e:
+        update_status(mc, 'routing', 'error')
+        raise e
+    update_status(mc, 'routing', 'pending')
+
+    # stop openvpn
+    update_status(mc, 'openvpn', 'working')
+    try:
+        wh.stop_openvpn()            
+    except Exception, e:
+        update_status(mc, 'openvpn', 'error')
+        raise e
+    update_status(mc, 'openvpn', 'pending')
+
+    # booted is sort of a non-entry
+    update_status(mc, 'booted', 'pending')
+
+    # stop instance
+    update_status(mc, 'instance', 'working')
+    try:
+        wh.stop_instance()
+    except Exception, e:
+        update_status(mc, 'instance', 'error')
+        raise e
+    update_status(mc, 'instance', 'pending')
+
+    # settings and orphans are also unimportant
+    update_status(mc, 'orphans', 'pending')
+    update_status(mc, 'settings', 'pending')
+
+    mc.set('tunnel-open', False)
 
 
 def load_region():

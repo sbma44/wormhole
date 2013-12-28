@@ -67,25 +67,60 @@ $def with (open_tunnel, region)
 
 				<a class="pure-button pure-button-primary" id="open-wormhole" href="#">Open Wormhole</a>
 
+				<a class="pure-button pure-button-primary" id="close-wormhole" href="#">Close Wormhole</a>
+
 				<script type="text/javascript">
 				var interval = null;
 				$$(function(){
 					$$('a#open-wormhole').click(function(){
+						window.clearInterval(interval);						
 						$$.post('/launch', {'activate': 1}, function(data){
 							if(data.result=='error'){
 								alert('Error detected.');
 							}
 							else if(data.result=='already open'){
 								alert('Tunnel is already open.');
-							}else if(data.result=='started'){
+							}else if(data.result=='starting'){
 								interval = window.setInterval(function(){
 									$$.get('/ajax/launch-status', function(data){
-										console.log(data);
+										var all_ok = true;
 										for(var stepname in data){
 											$$('li#' + stepname).removeClass('working error ok pending').addClass(data[stepname]);
+											if(data[stepname]!='ok')
+												all_ok = false;
 											if(data[stepname]=='error')
 												window.clearInterval(interval);
 										}
+										if(all_ok)
+											window.clearInterval(interval);
+									});
+								}, 1000);
+							}
+						});
+					});
+
+					$$('a#close-wormhole').click(function(){
+						window.clearInterval(interval);
+						$$.post('/launch', {'deactivate': 1}, function(data){
+							if(data.result=='error'){
+								alert('Error detected.');
+							}
+							else if(data.result=='already closed'){
+								alert('Tunnel is already closed.');
+							}else if(data.result=='stopping'){
+								interval = window.setInterval(function(){
+									$$.get('/ajax/launch-status', function(data){
+										var all_pending = true;
+										for(var stepname in data){											
+											$$('li#' + stepname).removeClass('working error ok pending').addClass(data[stepname]);
+											if(data[stepname]!='pending')
+												all_pending = false;
+											if(data[stepname]=='error')
+												window.clearInterval(interval);
+										}
+										if(all_pending)
+											window.clearInterval(interval);
+
 									});
 								}, 1000);
 							}
