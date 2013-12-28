@@ -96,8 +96,9 @@ class Wormhole(object):
 					wormhole_sg.delete()
 				except:
 					print "Tried to delete security group %s but could not" % wormhole_sg.name
-					novel_security_group_name = novel_security_group_name + "-%d" % time.time()				
-		self.security_group = self.conn.create_security_group("%s-%s" % (self.SECURITY_GROUP_NAME, str(int(time.time()))), 'Wormhole VPN project')
+		
+		novel_security_group_name = "%s-%s" % (self.SECURITY_GROUP_NAME, str(int(time.time())))
+		self.security_group = self.conn.create_security_group(novel_security_group_name, 'Wormhole VPN project')
 		self.security_group.authorize(ip_protocol='tcp', from_port=22, to_port=22, cidr_ip='0.0.0.0/0')
 		return self.security_group	
 
@@ -144,7 +145,7 @@ class Wormhole(object):
 		self.enable_access()		
 
 		print 'Launching instance...'
-		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.SECURITY_GROUP_NAME])
+		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.security_group.name])
 		self.instance = self.reservation.instances[0]
 		
 		print 'Waiting for instance...'
