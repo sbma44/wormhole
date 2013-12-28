@@ -204,7 +204,7 @@ class Wormhole(object):
 			'%s/openvpn' % os.getcwd()
 		]
 
-		self.tunnel_process = subprocess.Popen(openvpn_call, stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
+		self.tunnel_process = subprocess.Popen(map(lambda x: str(x), openvpn_call), stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
 		self.tunnel_process_stdout = ''		
 		self.tunnel_message_queue = Queue()
 		
