@@ -16,26 +16,12 @@ def enqueue_output(out, queue):
         queue.put(line)
     out.close()
 
-# def find_all_global_instances():
-# 	db = sqlite3.connect(self.SQLITE_DB)
-# 	cursor = db.cursor()
-# 	targets = []
-# 	for (name, region_id) in cursor.execute("SELECT name, id FROM regions"):
-# 		targets.append((name, region_id))
-# 	db.close()
-
-# 	for (name, region_id) in targets:
-# 		wh = Wormhole(region_id)
-# 		for instance in wh.conn.get_only_instances():
-# 			wh.record_instance(instance)
-
 def get_valid_regions():
 	r = Wormhole.REGIONS.copy()
 	for k in Wormhole.REGIONS:
 		if len(Wormhole.REGIONS[k].get('ami_id', ''))==0:
 			del r[k]
 	return r
-
 
 class Wormhole(object):
 	"""Creates EC2 instances for OpenVPN tunneling"""
@@ -76,15 +62,8 @@ class Wormhole(object):
 				if instance.image_id==ami_id:
 					instance.terminate()
 
-	# def record_instance(self, instance):
-	# 	db = sqlite3.connect(self.SQLITE_DB)
-	# 	cursor = db.cursor()
-	# 	cursor.execute("DELETE FROM instances WHERE instance_id=?", (instance.id,))
-	# 	cursor.execute("INSERT INTO instances (instance_id, timestamp, region, ip, state, public_dns_name, instance_type, image_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", (instance.id, int(time.time()), self.region, instance.ip_address, instance.state, instance.public_dns_name, instance.instance_type, instance.image_id))
-	# 	db.commit()
-	# 	db.close()
-
 	def get_public_ip(self):
+		# TODO: make this use a secure service that you control
 		self.public_ip = urlopen('http://bot.whatismyipaddress.com/').read().strip()
 		return self.public_ip
 
@@ -157,10 +136,6 @@ class Wormhole(object):
 		print 'Instance is running.'
 		self.instance_ip = self.instance.ip_address
 
-		
-	# def connect(self):
-	# 	self.cmdshell = boto.manage.cmdshell.sshclient_from_instance(instance, self._key_path(), user_name=AMI_USER_NAME)
-
 	def start_openvpn(self):
 		# openvpn process call
 		openvpn_call = [
@@ -230,14 +205,11 @@ class Wormhole(object):
 		else:
 			return 'working'
 
-		#self.tunnel_process_stdout
-
-	def stop(self):
+	def stop_instance(self):
 		self.disable_access()
-		for reservation in self.conn.get_all_reservations():
-			for instance in reservation.instances:
-				if instance.image_id==self.REGIONS[self.region]['ami_id']:
-					instance.terminate()
+		self.instance.terminate()
+		try:
+			self.security_group.delete()
 
 	REGIONS = {
 		'us-east-1': {
