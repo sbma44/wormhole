@@ -97,7 +97,7 @@ class Wormhole(object):
 		security_groups = self.conn.get_all_security_groups()
 		for wormhole_sg in security_groups:			
 			print wormhole_sg.name
-			if wormhole_sg.name==self.SECURITY_GROUP_NAME:
+			if wormhole_sg.name.startswith(self.SECURITY_GROUP_NAME):
 				# remove orphan SGs with port 1194 open
 				for rule in wormhole_sg.rules:					
 					if int(rule.from_port)==self.OPENVPN_PORT and int(rule.to_port)==self.OPENVPN_PORT and rule.ip_protocol.lower().strip()=='udp':
