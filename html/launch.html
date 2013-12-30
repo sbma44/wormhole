@@ -49,9 +49,11 @@ $def with (open_tunnel, region)
 
     <div class="pure-u-1" id="main">
 
+
 		<div class="header">
 		    <h1>Open Wormhole</h1>		  
-		    <h2>Create a new tunnel to $region.</h2>		  
+		    $if region:
+		    	<h2>Create a new tunnel to $region.</h2>		  
 		</div>
 
 		<div class="content" id="launch-content">
@@ -131,7 +133,7 @@ $def with (open_tunnel, region)
 			$else:
 				a tunnel is already open!
     		
-    	</div>
+	    </div>
     </div>
 </div>
 

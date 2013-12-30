@@ -63,15 +63,15 @@ $def with (valid_credentials, valid_regions, current_region)
 $if valid_credentials>0:
 	<div class="pure-control-group">
 		<label for="access_key">Access Key</label>
-		<input id="access_key" name="access_key" type="text" placeholder="">
+		<input id="access_key" class="pure-input-1-2" name="access_key" type="text" placeholder="">
 	</div>
 
 	<div class="pure-control-group">
 		<label for="secret_key">Secret Key</label>
-		<input id="secret_key" name="secret_key" type="text" placeholder="">
+		<input id="secret_key" class="pure-input-1-2" name="secret_key" type="text" placeholder="">
 	</div>		
 
-	<div class="pure-control-group control-group-message"><div class="control-group-message-success" id="credentials-success"><i class="fa fa-check-circle "></i> Credentials confirmed</div><div class="control-group-message-error" id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</div></div>
+	<div class="pure-control-group control-group-message"><div class="control-group-message-success" id="credentials-success"><i class="fa fa-check-circle "></i> AWS Credentials confirmed. Be sure to save them using the button below.</div><div class="control-group-message-error" id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</div></div>
 
 	<div class="pure-control-group">
 		<label for="validate_credentials">&nbsp;</label>
@@ -98,8 +98,8 @@ $if valid_credentials>0:
 	</script>
 	        
 $else:
-	<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> Credentials confirmed</span></div>
-	<div>Need to change your current credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
+	<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> AWS Credentials confirmed</span></div>
+	<div id="change-credentials-msg">Need to change your credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
 	<input id="access_key" name="access_key" type="hidden" value=""/>
 	<input id="secret_key" name="secret_key" type="hidden" value=""/>	
 	<div class="pure-control-group">
