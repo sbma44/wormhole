@@ -1,0 +1,2 @@
+#!/bin/bash
+/sbin/iptables-restore < /home/pi/Devel/wormhole/iptables-nat.rules
