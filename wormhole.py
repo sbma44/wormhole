@@ -215,7 +215,7 @@ class Wormhole(object):
 
 	REGIONS = {
 		'us-east-1': {
-			u'ami_id': u'ami-034c636a',
+			u'ami_id': u'',
 	  		u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.us-east-1.amazonaws.com',
 			u'lat': u'38.13',
@@ -233,7 +233,7 @@ class Wormhole(object):
 			u'short_name': u'Oregon'
 		},
 		'us-west-1': {
-			u'ami_id': u'ami-fc2616b9',
+			u'ami_id': u'ami-282c1f6d',
 			u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.us-west-1.amazonaws.com',
 			u'lat': u'41.48',
