@@ -233,7 +233,7 @@ class Wormhole(object):
 			u'short_name': u'Oregon'
 		},
 		'us-west-1': {
-			u'ami_id': u'ami-282c1f6d',
+			u'ami_id': u'ami-921320d7',
 			u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.us-west-1.amazonaws.com',
 			u'lat': u'41.48',
@@ -298,3 +298,5 @@ class Wormhole(object):
 	KEY_PAIR_PATH = '.'
 	SQLITE_DB = 'wormhole.db'
 	OPENVPN_PORT = 1194
+
+# sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
