@@ -3,6 +3,7 @@ import os, sys, time, sqlite3, subprocess, json
 from threading import Thread
 from urllib import urlopen
 from threading  import Thread
+from uuid import getnode as get_mac_id
 import envoy
 try:
     from Queue import Queue, Empty
@@ -43,7 +44,8 @@ class Wormhole(object):
 		self.public_ip = None
 		self.reservation = None	
 		self.aws_access_key = aws_access_key
-		self.aws_secret_key = aws_secret_key	
+		self.aws_secret_key = aws_secret_key
+		self.system_id = get_mac_id()
 
 	def validate_credentials(self):
 		try:
@@ -59,7 +61,8 @@ class Wormhole(object):
 				continue
 			wh = Wormhole(region_id, self.aws_access_key, self.aws_secret_key)
 			for instance in wh.conn.get_only_instances():
-				if instance.image_id==ami_id:
+				system_id = instance.tags.get('wormhole-system-id')
+				if system_id==self.system_id and instance.image_id==ami_id:
 					instance.terminate()
 
 	def get_public_ip(self):
@@ -117,7 +120,7 @@ class Wormhole(object):
 			self.get_public_ip()
 		self.security_group.revoke(ip_protocol='udp', from_port=self.OPENVPN_PORT, to_port=self.OPENVPN_PORT, cidr_ip='%s/32' % self.public_ip)
 
-	def start_instance(self):
+	def start_instance(self, tags={}):
 		print 'Setting up key pair...'
 		self.create_key_pair_if_necessary()
 		
@@ -127,7 +130,11 @@ class Wormhole(object):
 		print 'Launching instance...'
 		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.security_group.name])
 		self.instance = self.reservation.instances[0]
-		
+
+		tags['wormhole-system-id'] = self.system_id
+		for (t, t_value) in tags.items():
+			self.instance.add_tag(t, t_value)		
+
 		print 'Waiting for instance...'
 		while self.instance.state!='running':
 			time.sleep(5)

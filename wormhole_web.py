@@ -3,10 +3,7 @@ import web
 import wormhole
 import memcache
 from threading import Thread, Event
-
-AWS_CREDENTIALS_FILE = 'aws_credentials.json'
-REGION_FILE = 'aws_region.json'
-MEMCACHE_SERVER = '127.0.0.1:11211'
+from settings import *
 
 urls = (
     '/settings', 'settings',    
@@ -17,15 +14,18 @@ urls = (
     '/about', 'about'
 )
 
+def make_menu(path):
+    render = web.template.render('html')
+    return render.menu(path)
+
 class launch:
     def GET(self):
         web.header('Content-Type', 'text/html')     
-        render = web.template.render('html')
+        render = web.template.render('html', globals={'make_menu': make_menu})
         region = wormhole.Wormhole.REGIONS.get(load_region(), {}).get('short_name', False)
         mc = memcache.Client([MEMCACHE_SERVER], debug=0)
         open_tunnel = mc.get('tunnel-open')     
         return render.launch(open_tunnel, region)
-
 
     def POST(self):
         web.header('Content-Type', 'application/json')      
@@ -79,16 +79,16 @@ class settings(object):
 
         current_region = load_region()
 
-        render = web.template.render('html')
+        render = web.template.render('html', globals={'make_menu': make_menu})
         return render.settings(valid_credentials, valid_regions, current_region)
 
     def POST(self):
-        form_values = web.input(access_key='', secret_key='')
-        save_region(form_values.region)     
-        if not '' in (form_values.access_key, form_values.secret_key):
-            save_credentials(form_values.access_key, form_values.secret_key)
+        form_values = web.input(access_key='', secret_key='')        
         if form_values.access_key=='DELETE' and form_values.secret_key=='DELETE':
             os.unlink(AWS_CREDENTIALS_FILE)
+        elif not '' in (form_values.access_key, form_values.secret_key):
+            save_credentials(form_values.access_key, form_values.secret_key)        
+            save_region(form_values.region)     
         raise web.seeother('/settings')
 
 class ajax_validate(object):
@@ -112,13 +112,15 @@ class ajax_launch_status(object):
 class status(object):
     def GET(self):
         web.header('Content-Type', 'text/html')     
-        render = web.template.render('html')
+        render = web.template.render('html', globals={'make_menu': make_menu})
         return render.status()
 
 
 class about(object):
     def GET(self):
-        pass
+        web.header('Content-Type', 'text/html')     
+        render = web.template.render('html', globals={'make_menu': make_menu})
+        return render.about()
 
 def update_status(mc, code, result):
     status = mc.get('status')
@@ -245,28 +247,6 @@ def open_wormhole():
 
     mc.set('tunnel-open', False)
 
-
-def load_region():
-    if os.path.exists(REGION_FILE):
-        return json.load(open(REGION_FILE))
-    else:
-        return False
-    
-def save_region(region):
-    f = open(REGION_FILE, 'w')
-    json.dump(region, f)
-    f.close()
-
-def load_credentials():
-    if os.path.exists(AWS_CREDENTIALS_FILE):
-        return json.load(open(AWS_CREDENTIALS_FILE))
-    else:
-        return False
-                    
-def save_credentials(aws_access_key, aws_secret_key):
-    f = open(AWS_CREDENTIALS_FILE, 'w')
-    json.dump((aws_access_key, aws_secret_key), f)
-    f.close()
 
 if __name__ == "__main__":
     app = web.application(urls, globals())

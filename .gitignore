@@ -38,3 +38,4 @@ nosetests.xml
 # Amazon Web Services
 *.pem
 aws_*.json
+.DS_Store

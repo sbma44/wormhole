@@ -21,30 +21,7 @@
     <span></span>
 	</a>
 
-	<div class="pure-u" id="menu">
-    	<div class="pure-menu pure-menu-open">
-        	<a class="pure-menu-heading" href="/"><img src="/static/img/wormhole.png" alt="Wormhole logo" /></a>
-
-	        <ul>
-	            <li class="pure-menu-selected ">
-	                <a href="/launch"><i class="fa fa-rocket"></i>Start</a>
-	            </li>
-
-	            <li class=" ">
-	                <a href="/settings"><i class="fa fa-wrench"></i>Settings</a>
-	            </li>	          
-
-	        	<li class=" ">
-	                <a href="/"><i class="fa fa-dashboard"></i>Status</a>
-	            </li>
-
-	            <li class=" ">
-	                <a href="/about"><i class="fa fa-info-circle"></i>About</a>
-	            </li>	          
-	        </ul>
-    	</div>
-	</div>
-
+	$:make_menu('status')
 
     <div class="pure-u-1" id="main">
 

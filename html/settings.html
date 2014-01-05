@@ -22,43 +22,20 @@ $def with (valid_credentials, valid_regions, current_region)
     <span></span>
 	</a>
 
-	<div class="pure-u" id="menu">
-    	<div class="pure-menu pure-menu-open">
-        	<a class="pure-menu-heading" href="/"><img src="/static/img/wormhole.png" alt="Wormhole logo" /></a>
-
-	        <ul>
-	            <li>
-	                <a href="/launch"><i class="fa fa-rocket"></i>Start</a>
-	            </li>
-
-	            <li class="pure-menu-selected ">
-	                <a href="/settings"><i class="fa fa-wrench"></i>Settings</a>
-	            </li>	          
-
-	        	<li class=" ">
-	                <a href="/"><i class="fa fa-dashboard"></i>Status</a>
-	            </li>
-
-	            <li class=" ">
-	                <a href="/about"><i class="fa fa-info-circle"></i>About</a>
-	            </li>	          
-	        </ul>
-    	</div>
-	</div>
-
+	$:make_menu('settings')
 
     <div class="pure-u-1" id="main">
 
 		<div class="header">
 		    <h1>Settings</h1>		  
-		    <!-- <h2>Amazon credentials &amp; preferred region.</h2>		   -->
+		    <h2>Amazon credentials &amp; preferred region.</h2>		  
 		</div>
 
 		<div class="content">		
 
 		<form class="pure-form pure-form-aligned" id="settings-form" method="POST">		
 			<fieldset>
-				<legend>Amazon Web Services Credentials</legend>
+				<legend>Amazon Web Services Credentials <span id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</span></legend>
 				
 $if valid_credentials>0:
 	<div class="pure-control-group">
@@ -70,33 +47,7 @@ $if valid_credentials>0:
 		<label for="secret_key">Secret Key</label>
 		<input id="secret_key" class="pure-input-1-2" name="secret_key" type="text" placeholder="">
 	</div>		
-
-	<div class="pure-control-group control-group-message"><div class="control-group-message-success" id="credentials-success"><i class="fa fa-check-circle "></i> AWS Credentials confirmed. Be sure to save them using the button below.</div><div class="control-group-message-error" id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</div></div>
-
-	<div class="pure-control-group">
-		<label for="validate_credentials">&nbsp;</label>
-		<button type="button" id="validate_credentials" class="pure-button pure-button-primary">Check Credentials</button><img src="/static/img/loadinfo.gif" alt="ajax loading indicator" id="credential-check-spinner" />
-	</div>
-
-	<script type="text/javascript">
-	$$(function(){
-		$$('#validate_credentials').click(function() {
-			$$('#credentials-success').hide();
-			$$('#credentials-error').hide();			
-			$$('#credential-check-spinner').show();			
-			$$.post('/ajax/validate', {'access_key': $$('#access_key').val(), 'secret_key': $$('#secret_key').val()}, function(result) {
-				$$('#credential-check-spinner').hide();
-				if(result.success){
-					$$('#validate_credentials').fadeOut(400, function() { $$('#credentials-success').fadeIn(); });					
-				}
-				else {
-					$$('#credentials-error').slideDown();
-				}
-			});
-		});
-	});
-	</script>
-	        
+        
 $else:
 	<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> AWS Credentials confirmed</span></div>
 	<div id="change-credentials-msg">Need to change your credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
@@ -121,21 +72,53 @@ $else:
 </fieldset>
 
 		    <fieldset>
-				<legend>Output Region</legend>
+				<legend>Output Region <span id="region-error"><i class="fa fa-exclamation-triangle"></i> Please select a region</span></legend>
 				
 				$for (val, label) in valid_regions:
 					$ selected = ""
 					$if val==current_region:
 						$ selected = " checked=\"true\""					
-					<div class="region_choice"><input type="radio" name="region" value="$val"$:(selected)><span>$label</span></div>
+					<div class="region_choice"><input type="radio" id="region-radio" name="region" value="$val"$:(selected)><span>$label</span></div>
 		    </fieldset>
 
 			<div class="pure-control-group">
 				<label for="submit_form">&nbsp;</label>
-				<button type="submit" id="submit_form" class="pure-button pure-button-primary">Save</button>
+				<button type="submit" id="submit_form" class="pure-button pure-button-primary">Verify &amp; Save</button><img src="/static/img/loadinfo.gif" alt="ajax loading indicator" id="credential-check-spinner" />
 			</div>
 		</form>
 
+
+	<script type="text/javascript">
+	$$(function(){
+		$$('#submit_form').click(function(event) {
+			var all_clear = true;
+			event.preventDefault();
+			$$('#submit_form').addClass('pure-button-disabled');
+			$$('#credentials-success').hide();
+			$$('#credentials-error').hide();			
+			$$('#credential-check-spinner').show();	
+
+			if($$('#region-radio:checked').length==0){
+				$$('#region-error').fadeIn();
+				all_clear = false;
+			}
+
+			$$.post('/ajax/validate', {'access_key': $$('#access_key').val(), 'secret_key': $$('#secret_key').val()}, function(result) {
+				$$('#credential-check-spinner').hide();
+				if(!result.success){
+					all_clear = false;									
+					$$('#credentials-error').fadeIn();
+				}
+				if(all_clear){
+					$$('#settings-form').submit();					
+				}
+				else {
+					$$('#submit_form').removeClass('pure-button-disabled');
+				}
+			});
+		});
+	});
+	</script>
 
 
     	</div>
