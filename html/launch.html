@@ -61,14 +61,19 @@ $def with (open_tunnel, region)
 				<script type="text/javascript">
 				var interval = null;
 				var activate_state = true;
+				var button_disabled = false;
 				jQuery(function(){
 					jQuery.Color.hook( "fill stroke" );
 
 					jQuery('a#open-wormhole').click(function(){
+						if(button_disabled)
+							return;
+
 						window.clearInterval(interval);
 
 						if(activate_state){
-							jQuery('#open-wormhole').text('Cancel');
+							jQuery('#open-wormhole').addClass('pure-button-disabled');
+							button_disabled = true;
 							jQuery('#launch-checklist li').removeClass('working error ok').addClass('pending');						
 							jQuery('#wormhole-icon').animate({fill: 'rgb(75, 75, 75)'}, 1000).addClass('spinit');						
 							jQuery('#launch-checklist').slideDown();
@@ -92,7 +97,8 @@ $def with (open_tunnel, region)
 											}
 											if(all_ok){
 												jQuery('#wormhole-icon').animate({fill: 'rgb(28, 184, 65)'}, 1000);
-												jQuery('#open-wormhole').text('Close Wormhole');
+												jQuery('#open-wormhole').text('Close Wormhole').removeClass('pure-button-disabled');
+												button_disabled = false;
 												window.clearInterval(interval);
 											}
 										});
@@ -104,7 +110,8 @@ $def with (open_tunnel, region)
 						}
 						else {
 							jQuery('#open-wormhole').text('Open Wormhole').addClass('pure-button-disabled');
-							
+							button_disabled = true;
+
 							jQuery.post('/launch', {activate: 0}, function(data){
 								if(data.result=='error'){
 									alert('Error detected.');
@@ -128,6 +135,7 @@ $def with (open_tunnel, region)
 												jQuery('#wormhole-icon').animate({fill: '#eee'}, 1000).removeClass('spinit');						
 												jQuery('#launch-checklist').slideUp();
 												jQuery('#open-wormhole').removeClass('pure-button-disabled');
+												button_disabled = false;
 												window.clearInterval(interval);
 											}
 										});
