@@ -91,6 +91,8 @@ $def with (open_tunnel, region)
 													window.clearInterval(interval);
 											}
 											if(all_ok){
+												jQuery('#wormhole-icon').animate({fill: 'rgb(28, 184, 65)'}, 1000);
+												jQuery('#open-wormhole').text('Close Wormhole');
 												window.clearInterval(interval);
 											}
 										});

@@ -348,7 +348,7 @@ def open_wormhole2():
     steps = ['settings', 'orphans', 'instance', 'boot', 'openvpn', 'routing']
     for step in steps:
         update_status(mc, step, 'working')
-        operation_func = locals().get('do_%s' % s)
+        operation_func = locals().get('do_%s' % step)
         try:
             operation_func()
         except Exception, e:
@@ -372,7 +372,7 @@ def open_wormhole2():
     # now reverse the procedure
     for step in reversed(steps):
         update_status(mc, step, 'working')
-        operation_func = locals().get('stop_%s' % s)
+        operation_func = locals().get('stop_%s' % step)
         try:
             operation_func()
         except Exception, e:
