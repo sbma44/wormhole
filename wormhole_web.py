@@ -29,7 +29,7 @@ class launch:
 
     def POST(self):
         web.header('Content-Type', 'application/json')      
-        form = web.input(activate=0, deactivate=0)      
+        form = web.input(activate=-1)      
         mc = memcache.Client([MEMCACHE_SERVER], debug=0)        
         open_tunnel = mc.get('tunnel-open') 
         print 'tunnel is open? %s' % open_tunnel
@@ -38,7 +38,7 @@ class launch:
                 print 'attempting to open tunnel'
                 try:    
                     mc.set('deactivate', False)             
-                    t = Thread(target=open_wormhole)
+                    t = Thread(target=open_wormhole2)
                     t.daemon = True # thread dies with the program
                     t.start()
                     return json.dumps({'result': 'starting'})
@@ -47,7 +47,7 @@ class launch:
                     raise e
             else:
                 return json.dumps({'result': 'already open'})
-        elif int(form.deactivate)==1:            
+        elif int(form.activate)==0:            
             if open_tunnel:
                 mc.set('deactivate', True)
                 return json.dumps({'result': 'stopping'})
@@ -130,6 +130,16 @@ def update_status(mc, code, result):
     mc.set('status', status)
 
 def open_wormhole():
+
+    def deactivation_signal_detected():
+        deactivation_signal = mc.get('deactivate')
+        if deactivation_signal:
+            # TODO: tear down any half-started processes?
+            mc.set('status', [])
+            return True
+        else:
+            return False
+
     mc = memcache.Client([MEMCACHE_SERVER], debug=0)
     mc.set('status', [])
 
@@ -152,7 +162,10 @@ def open_wormhole():
         raise e
     update_status(mc, 'settings', 'ok')
 
-    
+    # check on the process being cancelled
+    if deactivation_signal_detected(mc):
+        return True
+
     # stop all other instances
     update_status(mc, 'orphans', 'working')
     try:
@@ -161,6 +174,10 @@ def open_wormhole():
         update_status(mc, 'orphans', 'error')
         raise e
     update_status(mc, 'orphans', 'ok')
+
+    # check on the process being cancelled
+    if deactivation_signal_detected(mc):
+        return True
 
     # launch instance
     update_status(mc, 'instance', 'working')
@@ -172,10 +189,18 @@ def open_wormhole():
     update_status(mc, 'instance', 'ok')
     mc.set('instance-id', wh.instance.id)
 
+    # check on the process being cancelled
+    if deactivation_signal_detected(mc):
+        return True
+
     # wait for instance
-    update_status(mc, 'booted', 'working')
+    update_status(mc, 'boot', 'working')
     time.sleep(5)
-    update_status(mc, 'booted', 'ok')
+    update_status(mc, 'boot', 'ok')
+
+    # check on the process being cancelled
+    if deactivation_signal_detected(mc):
+        return True
 
     # launch openvpn
     update_status(mc, 'openvpn', 'working')
@@ -190,6 +215,10 @@ def open_wormhole():
         # print wh.tunnel_process_stdout
         raise e
     update_status(mc, 'openvpn', 'ok')
+
+    # check on the process being cancelled
+    if deactivation_signal_detected(mc):
+        return True
 
     # set up routing
     update_status(mc, 'routing', 'working')
@@ -229,8 +258,8 @@ def open_wormhole():
         raise e
     update_status(mc, 'openvpn', 'pending')
 
-    # booted is sort of a non-entry
-    update_status(mc, 'booted', 'pending')
+    # boot is sort of a non-entry
+    update_status(mc, 'boot', 'pending')
 
     # stop instance
     update_status(mc, 'instance', 'working')
@@ -244,6 +273,112 @@ def open_wormhole():
     # settings and orphans are also unimportant
     update_status(mc, 'orphans', 'pending')
     update_status(mc, 'settings', 'pending')
+
+    mc.set('tunnel-open', False)
+
+
+def open_wormhole2():
+
+    def deactivation_signal_detected():
+        deactivation_signal = mc.get('deactivate')
+        if deactivation_signal:
+            # TODO: tear down any half-started processes?
+            mc.set('status', [])
+            return True
+        else:
+            return False
+
+    def do_settings():
+        region = load_region()
+        if not region or len(wormhole.Wormhole.REGIONS.get(region, {}).get('ami_id',''))==0:
+            raise Exception('No valid region found')
+        
+        credentials = load_credentials()
+        if not credentials:
+            raise Exception('No stored credentials found')
+
+        wh = wormhole.Wormhole(region, credentials[0], credentials[1])
+        if not wh.validate_credentials():
+            raise Exception('No valid credentials found')
+
+    def do_orphans():
+        wh.stop_all_global_instances()
+
+    def do_instance():
+        wh.start_instance()
+        mc.set('instance-id', wh.instance.id)
+
+    def do_boot():
+        time.sleep(5)
+
+    def do_openvpn():
+        wh.start_openvpn()
+        while wh.check_tunnel_status()=='working':
+            time.sleep(0.25)
+        if wh.check_tunnel_status()=='error':
+            raise Exception('Error opening OpenVPN tunnel: %s' % (wh.tunnel_process_stdout,))
+
+    def do_routing():
+        wh.start_routing()
+
+    def stop_routing():
+        wh.stop_routing()
+
+    def stop_openvpn():
+        wh.stop_openvpn()
+
+    def stop_boot():
+        pass
+
+    def stop_instance():
+        wh.stop_instance()
+
+    def stop_orphans():
+        pass
+
+    def stop_settings():
+        pass
+
+    mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+    mc.set('status', [])
+    region = None
+    credentials = None
+    wh = None
+
+    steps = ['settings', 'orphans', 'instance', 'boot', 'openvpn', 'routing']
+    for step in steps:
+        update_status(mc, step, 'working')
+        operation_func = locals().get('do_%s' % s)
+        try:
+            operation_func()
+        except Exception, e:
+            update_status(mc, step, 'error')
+            raise e
+        update_status(mc, step, 'ok')
+
+        # check on the process being cancelled
+        if deactivation_signal_detected(mc):
+            return True
+    
+    mc.set('tunnel-open', True)
+
+    # wait for deactivation signal
+    while True:
+        deactivation_signal = mc.get('deactivate')
+        if deactivation_signal:
+            break
+        time.sleep(0.25)
+
+    # now reverse the procedure
+    for step in reversed(steps):
+        update_status(mc, step, 'working')
+        operation_func = locals().get('stop_%s' % s)
+        try:
+            operation_func()
+        except Exception, e:
+            update_status(mc, step, 'error')
+            raise e
+        update_status(mc, step, 'pending')
 
     mc.set('tunnel-open', False)
 

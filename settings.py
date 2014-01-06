@@ -1,3 +1,5 @@
+import os, json
+
 AWS_CREDENTIALS_FILE = 'aws_credentials.json'
 REGION_FILE = 'aws_region.json'
 MEMCACHE_SERVER = '127.0.0.1:11211'
