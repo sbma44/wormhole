@@ -126,7 +126,7 @@
 
 .button-holder { text-align: center; margin-top: 1em;}
 #wormhole-icon { fill: #eee; display: block; margin: 1em auto;}
-#wormhole-icon.active { fill: rgb(28, 184, 65); display: block; margin: 1em auto;}
+#wormhole-icon.ok { fill: rgb(28, 184, 65); display: block; margin: 1em auto;}
 #close-wormhole { display: none;}
 #launch-checklist.pending { display: none; }
 #launch-checklist.ok { display: block; }
