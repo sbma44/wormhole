@@ -38,7 +38,7 @@ class launch:
                 print 'attempting to open tunnel'
                 try:    
                     mc.set('deactivate', False)             
-                    t = Thread(target=open_wormhole2)
+                    t = Thread(target=open_wormhole)
                     t.daemon = True # thread dies with the program
                     t.start()
                     return json.dumps({'result': 'starting'})
@@ -132,156 +132,8 @@ def update_status(mc, code, result):
 def open_wormhole():
 
     def deactivation_signal_detected():
-        deactivation_signal = mc.get('deactivate')
-        if deactivation_signal:
-            # TODO: tear down any half-started processes?
-            mc.set('status', [])
-            return True
-        else:
-            return False
-
-    mc = memcache.Client([MEMCACHE_SERVER], debug=0)
-    mc.set('status', [])
-
-    # check settings
-    update_status(mc, 'settings', 'working')
-    try:
-        region = load_region()
-        if not region or len(wormhole.Wormhole.REGIONS.get(region, {}).get('ami_id',''))==0:
-            raise Exception('No valid region found')
-        
-        credentials = load_credentials()
-        if not credentials:
-            raise Exception('No stored credentials found')
-
-        wh = wormhole.Wormhole(region, credentials[0], credentials[1])
-        if not wh.validate_credentials():
-            raise Exception('No valid credentials found')
-    except Exception, e:
-        update_status(mc, 'settings', 'error')
-        raise e
-    update_status(mc, 'settings', 'ok')
-
-    # check on the process being cancelled
-    if deactivation_signal_detected(mc):
-        return True
-
-    # stop all other instances
-    update_status(mc, 'orphans', 'working')
-    try:
-        wh.stop_all_global_instances()
-    except Exception, e:
-        update_status(mc, 'orphans', 'error')
-        raise e
-    update_status(mc, 'orphans', 'ok')
-
-    # check on the process being cancelled
-    if deactivation_signal_detected(mc):
-        return True
-
-    # launch instance
-    update_status(mc, 'instance', 'working')
-    try:
-        wh.start_instance()
-    except Exception, e:
-        update_status(mc, 'instance', 'error')
-        raise e
-    update_status(mc, 'instance', 'ok')
-    mc.set('instance-id', wh.instance.id)
-
-    # check on the process being cancelled
-    if deactivation_signal_detected(mc):
-        return True
-
-    # wait for instance
-    update_status(mc, 'boot', 'working')
-    time.sleep(5)
-    update_status(mc, 'boot', 'ok')
-
-    # check on the process being cancelled
-    if deactivation_signal_detected(mc):
-        return True
-
-    # launch openvpn
-    update_status(mc, 'openvpn', 'working')
-    try:
-        wh.start_openvpn()
-        while wh.check_tunnel_status()=='working':
-            time.sleep(0.25)
-        if wh.check_tunnel_status()=='error':
-            update_status(mc, 'openvpn', 'error')       
-    except Exception, e:
-        update_status(mc, 'openvpn', 'error')
-        # print wh.tunnel_process_stdout
-        raise e
-    update_status(mc, 'openvpn', 'ok')
-
-    # check on the process being cancelled
-    if deactivation_signal_detected(mc):
-        return True
-
-    # set up routing
-    update_status(mc, 'routing', 'working')
-    try:
-        wh.start_routing()      
-    except Exception, e:
-        update_status(mc, 'routing', 'error')
-        raise e
-    update_status(mc, 'routing', 'ok')
-    
-    mc.set('tunnel-open', True)
-
-    # wait for deactivation signal
-    while True:
-        deactivation_signal = mc.get('deactivate')
-        if deactivation_signal:
-            break
-        time.sleep(0.25)
-
-    # now reverse the procedure
-
-    # stop routing
-    update_status(mc, 'routing', 'working')
-    try:
-        wh.stop_routing()      
-    except Exception, e:
-        update_status(mc, 'routing', 'error')
-        raise e
-    update_status(mc, 'routing', 'pending')
-
-    # stop openvpn
-    update_status(mc, 'openvpn', 'working')
-    try:
-        wh.stop_openvpn()            
-    except Exception, e:
-        update_status(mc, 'openvpn', 'error')
-        raise e
-    update_status(mc, 'openvpn', 'pending')
-
-    # boot is sort of a non-entry
-    update_status(mc, 'boot', 'pending')
-
-    # stop instance
-    update_status(mc, 'instance', 'working')
-    try:
-        wh.stop_instance()
-    except Exception, e:
-        update_status(mc, 'instance', 'error')
-        raise e
-    update_status(mc, 'instance', 'pending')
-
-    # settings and orphans are also unimportant
-    update_status(mc, 'orphans', 'pending')
-    update_status(mc, 'settings', 'pending')
-
-    mc.set('tunnel-open', False)
-
-
-def open_wormhole2():
-
-    def deactivation_signal_detected():
         global mc, region, credentials, wh
-        
+
         deactivation_signal = mc.get('deactivate')
         if deactivation_signal:
             return True
@@ -393,5 +245,5 @@ def open_wormhole2():
 
 
 if __name__ == "__main__":
-    app = web.application(urls, globals())
+    app = web.application(urls, globals())    
     app.run()
