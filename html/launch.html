@@ -43,16 +43,16 @@ $def with (open_tunnel, region)
 
 		<div class="content" id="launch-content">
 
-$if open_tunnel:
-	$ wormhole_status_class = 'ok'
-	$ wormhole_icon_class = 'spinit'
-	$ button_text = 'Close Wormhole'
-	$ activate_state_value = 'false'
-$else:
-	$ wormhole_status_class = 'pending'
-	$ wormhole_icon_class = ''
-	$ button_text = 'Open Wormhole'
-	$ activate_state_value = 'true'
+			$if open_tunnel:
+				$ wormhole_status_class = 'ok'
+				$ wormhole_icon_class = 'spinit'
+				$ button_text = 'Close Wormhole'
+				$ activate_state_value = 'false'
+			$else:
+				$ wormhole_status_class = 'pending'
+				$ wormhole_icon_class = ''
+				$ button_text = 'Open Wormhole'
+				$ activate_state_value = 'true'
 
 			<ul id="launch-checklist" class="$wormhole_status_class">
 				<li class="$wormhole_status_class" id="settings"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Validating settings</li>
