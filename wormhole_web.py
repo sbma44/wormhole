@@ -280,6 +280,8 @@ def open_wormhole():
 def open_wormhole2():
 
     def deactivation_signal_detected():
+        global mc, region, credentials, wh
+        
         deactivation_signal = mc.get('deactivate')
         if deactivation_signal:
             return True
@@ -287,6 +289,8 @@ def open_wormhole2():
             return False
 
     def do_settings():
+        global mc, region, credentials, wh
+
         region = load_region()
         if not region or len(wormhole.Wormhole.REGIONS.get(region, {}).get('ami_id',''))==0:
             raise Exception('No valid region found')
@@ -300,9 +304,11 @@ def open_wormhole2():
             raise Exception('No valid credentials found')
 
     def do_orphans():
+        global mc, region, credentials, wh
         wh.stop_all_global_instances()
 
     def do_instance():
+        global mc, region, credentials, wh
         wh.start_instance()
         mc.set('instance-id', wh.instance.id)
 
@@ -310,6 +316,7 @@ def open_wormhole2():
         time.sleep(5)
 
     def do_openvpn():
+        global mc, region, credentials, wh
         wh.start_openvpn()
         while wh.check_tunnel_status()=='working':
             time.sleep(0.25)
@@ -317,18 +324,22 @@ def open_wormhole2():
             raise Exception('Error opening OpenVPN tunnel: %s' % (wh.tunnel_process_stdout,))
 
     def do_routing():
+        global mc, region, credentials, wh
         wh.start_routing()
 
     def stop_routing():
+        global mc, region, credentials, wh
         wh.stop_routing()
 
     def stop_openvpn():
+        global mc, region, credentials, wh
         wh.stop_openvpn()
 
     def stop_boot():
         pass
 
     def stop_instance():
+        global mc, region, credentials, wh
         wh.stop_instance()
 
     def stop_orphans():
@@ -337,6 +348,7 @@ def open_wormhole2():
     def stop_settings():
         pass
 
+    global mc, region, credentials, wh
     mc = memcache.Client([MEMCACHE_SERVER], debug=0)
     mc.set('status', [])
     region = None
