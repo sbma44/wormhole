@@ -282,8 +282,6 @@ def open_wormhole2():
     def deactivation_signal_detected():
         deactivation_signal = mc.get('deactivate')
         if deactivation_signal:
-            # TODO: tear down any half-started processes?
-            mc.set('status', [])
             return True
         else:
             return False
@@ -357,16 +355,15 @@ def open_wormhole2():
         update_status(mc, step, 'ok')
 
         # check on the process being cancelled
-        if deactivation_signal_detected(mc):
+        if deactivation_signal_detected():
+            # TODO: tear down any half-started processes?
+            mc.set('status', [])
             return True
     
     mc.set('tunnel-open', True)
 
     # wait for deactivation signal
-    while True:
-        deactivation_signal = mc.get('deactivate')
-        if deactivation_signal:
-            break
+    while not deactivation_signal_detected():        
         time.sleep(0.25)
 
     # now reverse the procedure
