@@ -26,7 +26,7 @@ def get_valid_regions():
 
 class Wormhole(object):
 	"""Creates EC2 instances for OpenVPN tunneling"""
-	def __init__(self, region='us-west-1', aws_access_key=None, aws_secret_key=None):
+	def __init__(self, region='us-west-1', aws_access_key=None, aws_secret_key=None, aws_key_directory='.'):
 		super(Wormhole, self).__init__()		
 
 		if not self.REGIONS.get(region):
@@ -40,7 +40,9 @@ class Wormhole(object):
 		self.conn = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)					
 		self.region = region
 		self.security_group = None
+		self.aws_key_directory = aws_key_directory
 		self.key_pair = None
+		self.key_pair_name = 'keypair_%s' % region
 		self.public_ip = None
 		self.reservation = None	
 		self.aws_access_key = aws_access_key
@@ -86,11 +88,12 @@ class Wormhole(object):
 		return self.security_group	
 
 	def _key_path(self):
-		return "%s/%s.pem" % (self.KEY_PAIR_PATH, self.KEY_PAIR_NAME)
+		return self.aws_key_directory
+		#return "%s/keypair_%s.pem" % (self.aws_key_directory, self.region)
 
 	def create_key_pair_if_necessary(self):
 		for kp in self.conn.get_all_key_pairs():
-			if kp.name==self.KEY_PAIR_NAME:
+			if kp.name==self.key_pair_name:
 				self.key_pair = kp
 
 		# have we got both the KP record and the .pem file? if so, we're fine
@@ -100,11 +103,11 @@ class Wormhole(object):
 		# if not, delete broken half-KPs
 		elif self.key_pair is not None:
 			self.key_pair.delete()
-		elif os.path.exists(self.KEY_PAIR_PATH):
-			os.unlink(self.KEY_PAIR_PATH)
+		elif os.path.exists('%s/%s.pem' % (self._key_path(), self.key_pair_name)):
+			os.unlink('%s/%s.pem' % (self._key_path(), self.key_pair_name))
 
-		self.key_pair = self.conn.create_key_pair(self.KEY_PAIR_NAME)
-		self.key_pair.save(self.KEY_PAIR_PATH)
+		self.key_pair = self.conn.create_key_pair(self.key_pair_name)
+		self.key_pair.save(self._key_path())
 		
 		return self.key_pair
 
@@ -128,7 +131,7 @@ class Wormhole(object):
 		self.enable_access()		
 
 		print 'Launching instance...'
-		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.KEY_PAIR_NAME, instance_type=self.INSTANCE_SIZE, security_groups=[self.security_group.name])
+		self.reservation = self.conn.run_instances(self.REGIONS[self.region]['ami_id'], key_name=self.key_pair_name, instance_type=self.INSTANCE_SIZE, security_groups=[self.security_group.name])
 		self.instance = self.reservation.instances[0]
 
 		tags['wormhole-system-id'] = self.system_id
@@ -249,11 +252,11 @@ class Wormhole(object):
 			u'short_name': u'California'
 		},
 		'eu-west-1': {
-			u'ami_id': u'',
+			u'ami_id': u'ami-381deb4f',
 			u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.eu-west-1.amazonaws.com',
-			u'lat': u'53',
-			u'lon': u'-8',
+			u'lat': u'53.0',
+			u'lon': u'-8.0',
 			u'name': u'EU (Ireland) Region',
 			u'short_name': u'Ireland'
 		},
@@ -299,10 +302,10 @@ class Wormhole(object):
 	}
 
 	AMI_USER_NAME = 'ec2-user'
-	KEY_PAIR_NAME = 'wormhole-kp'
 	SECURITY_GROUP_NAME = 'wormhole-vpn-sg'
 	INSTANCE_SIZE = 't1.micro'
-	KEY_PAIR_PATH = '.'
+	#KEY_PAIR_PATH = '.'
+	#KEY_PAIR_NAME = 'wormhole-kp'
 	SQLITE_DB = 'wormhole.db'
 	OPENVPN_PORT = 1194
 

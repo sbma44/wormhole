@@ -39,3 +39,4 @@ nosetests.xml
 *.pem
 aws_*.json
 .DS_Store
+aws/*
