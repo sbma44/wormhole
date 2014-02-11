@@ -249,7 +249,7 @@ class Wormhole(object):
 			u'short_name': u'California'
 		},
 		'eu-west-1': {
-			u'ami_id': u'',
+			u'ami_id': u'ami-381deb4f',
 			u'connection_type': u'HTTP and HTTPS',
 			u'domain': u'ec2.eu-west-1.amazonaws.com',
 			u'lat': u'53',
