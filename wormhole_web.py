@@ -67,7 +67,7 @@ class settings(object):
             valid_credentials = False
         else:
             region = wormhole.get_valid_regions().items()[0][0]
-            wh = wormhole.Wormhole(region, credentials[0], credentials[1])
+            wh = wormhole.Wormhole(region, credentials[0], credentials[1], AWS_DIRECTORY)
             valid_credentials = wh.validate_credentials()
 
         if valid_credentials:
@@ -99,7 +99,7 @@ class ajax_validate(object):
         web.header('Content-Type', 'application/json')
         region = wormhole.get_valid_regions().items()[0][0]
         form_values = web.input()
-        wh = wormhole.Wormhole(region, form_values.access_key, form_values.secret_key)
+        wh = wormhole.Wormhole(region, form_values.access_key, form_values.secret_key, AWS_DIRECTORY)
         return json.dumps({'success': wh.validate_credentials()})
 
 class ajax_launch_status(object):
@@ -154,7 +154,7 @@ def open_wormhole():
         if not credentials:
             raise Exception('No stored credentials found')
 
-        wh = wormhole.Wormhole(region, credentials[0], credentials[1])
+        wh = wormhole.Wormhole(region, credentials[0], credentials[1], AWS_DIRECTORY)
         if not wh.validate_credentials():
             raise Exception('No valid credentials found')
 
