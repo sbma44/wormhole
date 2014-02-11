@@ -37,7 +37,10 @@ class launch:
             if not open_tunnel:
                 print 'attempting to open tunnel'
                 try:    
-                    mc.set('deactivate', False)             
+                    mc.set('deactivate', False)   
+
+                    # TODO: change this to use the multiprocess module
+
                     t = Thread(target=open_wormhole)
                     t.daemon = True # thread dies with the program
                     t.start()
