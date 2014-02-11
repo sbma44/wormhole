@@ -40,3 +40,4 @@ nosetests.xml
 aws_*.json
 .DS_Store
 aws/*
+local_settings.py

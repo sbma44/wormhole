@@ -18,9 +18,9 @@ def save_region(region):
 
 def load_credentials():
     if os.path.exists('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE)):
-    	f = open('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE), 'r')
-    	j = f.read()
-    	f.close()
+        f = open('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE), 'r')
+        j = f.read()
+        f.close()
         return json.loads(j)
     else:
         return False
@@ -29,3 +29,8 @@ def save_credentials(aws_access_key, aws_secret_key):
     f = open('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE), 'w')
     json.dump((aws_access_key, aws_secret_key), f)
     f.close()
+
+try:
+    from local_settings import *
+except Exception, e:
+    pass
