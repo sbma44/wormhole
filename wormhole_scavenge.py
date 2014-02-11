@@ -3,6 +3,7 @@
 
 import wormhole
 import time
+from settings import *
 
 def scavenge():
 	(aws_access_key, aws_secret_key) = load_credentials()
@@ -15,7 +16,7 @@ def scavenge():
 		if len(ami_id)==0:
 			continue
 
-		wh = wormhole.Wormhole(region_id, aws_access_key, aws_secret_key)
+		wh = wormhole.Wormhole(region_id, aws_access_key, aws_secret_key, AWS_DIRECTORY)
 		for instance in wh.conn.get_only_instances():
 
 			# if the instance has an expiration flag, make sure
