@@ -1,4 +1,3 @@
-$def with (open_tunnel, region)
 <!doctype html>
 <html lang="en">
 <head>
@@ -31,46 +30,49 @@ $def with (open_tunnel, region)
     <span></span>
 	</a>
 
-	$:make_menu('launch')
+	{% set path='launch' %}
+	{% include "menu.html" %}
 
     <div class="pure-u-1" id="main">
 
 		<div class="header">
 		    <h1>Open Wormhole</h1>		  
-		    $if region:
-		    	<h2>Create a new tunnel to $region.</h2>		  
+		    {% if region %}
+		    	<h2>Create a new tunnel to {{ region }}.</h2>		  
+		    {% endif %}
 		</div>
 
 		<div class="content" id="launch-content">
 
-			$if open_tunnel:
-				$ wormhole_status_class = 'ok'
-				$ wormhole_icon_class = 'spinit'
-				$ button_text = 'Close Wormhole'
-				$ activate_state_value = 'false'
-			$else:
-				$ wormhole_status_class = 'pending'
-				$ wormhole_icon_class = ''
-				$ button_text = 'Open Wormhole'
-				$ activate_state_value = 'true'
+			{% if open_tunnel %}
+				{% set wormhole_status_class = 'ok' %}
+				{% set wormhole_icon_class = 'spinit' %}
+				{% set button_text = 'Close Wormhole' %}
+				{% set activate_state_value = 'false' %}
+			{% else %}
+				{% set wormhole_status_class = 'pending' %}
+				{% set wormhole_icon_class = '' %}
+				{% set button_text = 'Open Wormhole' %}
+				{% set activate_state_value = 'true' %}
+			{% endif %}
 
-			<ul id="launch-checklist" class="$wormhole_status_class">
-				<li class="$wormhole_status_class" id="settings"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Validating settings</li>
-				<li class="$wormhole_status_class" id="orphans"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Checking for orphan instances</li>
-				<li class="$wormhole_status_class" id="instance"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Starting instance</li>
-				<li class="$wormhole_status_class" id="boot"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Instance boot sequence complete</li>
-				<li class="$wormhole_status_class" id="openvpn"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Creating VPN tunnel</li>
-				<li class="$wormhole_status_class" id="routing"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Routing traffic through tunnel</li>
+			<ul id="launch-checklist" class="{{ wormhole_status_class }}">
+				<li class="{{ wormhole_status_class }}" id="settings"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Validating settings</li>
+				<li class="{{ wormhole_status_class }}" id="orphans"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Checking for orphan instances</li>
+				<li class="{{ wormhole_status_class }}" id="instance"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Starting instance</li>
+				<li class="{{ wormhole_status_class }}" id="boot"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Instance boot sequence complete</li>
+				<li class="{{ wormhole_status_class }}" id="openvpn"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Creating VPN tunnel</li>
+				<li class="{{ wormhole_status_class }}" id="routing"><i class="fa fa-exclamation-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i>Routing traffic through tunnel</li>
 			</ul>
 
 			<div class="button-holder">
-			<svg id="wormhole-icon" class="$wormhole_status_class $wormhole_icon_class" xmlns:x="http://ns.adobe.com/Extensibility/1.0/" xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" xmlns:graph="http://ns.adobe.com/Graphs/1.0/" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Your_Icon" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve"><switch><foreignObject requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/" x="0" y="0" width="1" height="1"/><g i:extraneous="self"><path d="M89.141 35.617C86.25 22.852 77.844 14.405 68.699 10.364c11.371 10.018 21.846 29.405 8.814 47.069 -5.406 7.331-16.217 10.228-20.746 8.184 0 0 7.002-1.487 11.357-5.295 8.469-8.017 11.299-20.932 4.52-32.673 -0.969-1.678-2.098-3.206-3.357-4.575 -0.018-0.021-0.033-0.042-0.051-0.062 -4.764-5.683-11.307-9.075-18.337-10.116 -9.127-1.715-20.896 0.515-29.71 8.666C11.58 30.45 8.468 41.953 9.542 51.895c2.989-14.858 14.542-33.622 36.355-31.171 9.053 1.019 16.965 8.932 17.461 13.877 0 0-5.277-8.281-18.365-8.281 -0.24 0.004-0.747 0.024-0.761 0.024 -0.055 0.003-0.111 0.006-0.167 0.01 -8.51 0.333-16.783 4.784-21.83 13.526 -0.969 1.677-1.727 3.419-2.284 5.195 -0.01 0.024-0.019 0.05-0.028 0.074 -2.539 6.968-2.205 14.33 0.407 20.938 3.079 8.763 10.896 17.841 22.361 21.397 12.502 3.878 24.02 0.82 32.092-5.079C60.42 87.242 38.394 86.621 29.61 66.506c-3.645-8.35-0.749-19.159 3.287-22.061 0 0-4.534 8.71 2.012 20.044 4.482 7.484 12.617 12.658 22.949 12.658 0.498 0 4.488-0.311 5.926-0.633 0.027-0.003 0.055-0.008 0.08-0.011 7.303-1.286 13.512-5.256 17.928-10.822C87.842 58.635 91.795 47.325 89.141 35.617z"/></g></switch></svg>
-			<a class="pure-button pure-button-primary" id="open-wormhole" href="#">$button_text</a>	 			
+			<svg id="wormhole-icon" class="{{ wormhole_status_class }} {{ wormhole_icon_class }}" xmlns:x="http://ns.adobe.com/Extensibility/1.0/" xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" xmlns:graph="http://ns.adobe.com/Graphs/1.0/" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Your_Icon" x="0px" y="0px" width="100px" height="100px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve"><switch><foreignObject requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/" x="0" y="0" width="1" height="1"/><g i:extraneous="self"><path d="M89.141 35.617C86.25 22.852 77.844 14.405 68.699 10.364c11.371 10.018 21.846 29.405 8.814 47.069 -5.406 7.331-16.217 10.228-20.746 8.184 0 0 7.002-1.487 11.357-5.295 8.469-8.017 11.299-20.932 4.52-32.673 -0.969-1.678-2.098-3.206-3.357-4.575 -0.018-0.021-0.033-0.042-0.051-0.062 -4.764-5.683-11.307-9.075-18.337-10.116 -9.127-1.715-20.896 0.515-29.71 8.666C11.58 30.45 8.468 41.953 9.542 51.895c2.989-14.858 14.542-33.622 36.355-31.171 9.053 1.019 16.965 8.932 17.461 13.877 0 0-5.277-8.281-18.365-8.281 -0.24 0.004-0.747 0.024-0.761 0.024 -0.055 0.003-0.111 0.006-0.167 0.01 -8.51 0.333-16.783 4.784-21.83 13.526 -0.969 1.677-1.727 3.419-2.284 5.195 -0.01 0.024-0.019 0.05-0.028 0.074 -2.539 6.968-2.205 14.33 0.407 20.938 3.079 8.763 10.896 17.841 22.361 21.397 12.502 3.878 24.02 0.82 32.092-5.079C60.42 87.242 38.394 86.621 29.61 66.506c-3.645-8.35-0.749-19.159 3.287-22.061 0 0-4.534 8.71 2.012 20.044 4.482 7.484 12.617 12.658 22.949 12.658 0.498 0 4.488-0.311 5.926-0.633 0.027-0.003 0.055-0.008 0.08-0.011 7.303-1.286 13.512-5.256 17.928-10.822C87.842 58.635 91.795 47.325 89.141 35.617z"/></g></switch></svg>
+			<a class="pure-button pure-button-primary" id="open-wormhole" href="#">{{ button_text }}</a>	 			
 			</div>
 
 			<script type="text/javascript">
 			var interval = null;
-			var activate_state = $activate_state_value;
+			var activate_state = {{ activate_state_value }};
 			var button_disabled = false;
 			jQuery(function(){
 				jQuery.Color.hook( "fill stroke" );

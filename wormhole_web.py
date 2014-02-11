@@ -1,9 +1,12 @@
-import os, json, time
-import web
+import os, json, time, sys
+# import web
 import wormhole
 import memcache
 from threading import Thread, Event
 from settings import *
+
+from flask import Flask, render_template, request
+app = Flask(__name__)
 
 urls = (
     '/settings', 'settings',    
@@ -18,21 +21,19 @@ def make_menu(path):
     render = web.template.render('html')
     return render.menu(path)
 
-class launch:
-    def GET(self):
-        web.header('Content-Type', 'text/html')     
-        render = web.template.render('html', globals={'make_menu': make_menu})
+@app.route('/launch')
+def launch():
+    if request.method=='GET':
         region = wormhole.Wormhole.REGIONS.get(load_region(), {}).get('short_name', False)
         mc = memcache.Client([MEMCACHE_SERVER], debug=0)
-        open_tunnel = mc.get('tunnel-open')     
-        return render.launch(open_tunnel, region)
+        open_tunnel = mc.get('tunnel-open')             
+        return render_template('launch.html', open_tunnel=open_tunnel, region=region)
 
-    def POST(self):
-        web.header('Content-Type', 'application/json')      
+    elif request.method=='POST':
         form = web.input(activate=-1)      
         mc = memcache.Client([MEMCACHE_SERVER], debug=0)        
         open_tunnel = mc.get('tunnel-open') 
-        print 'tunnel is open? %s' % open_tunnel
+        j = ''
         if int(form.activate)==1:   
             if not open_tunnel:
                 print 'attempting to open tunnel'
@@ -44,19 +45,21 @@ class launch:
                     t = Thread(target=open_wormhole)
                     t.daemon = True # thread dies with the program
                     t.start()
-                    return json.dumps({'result': 'starting'})
+                    j = json.dumps({'result': 'starting'})
                 except Exception, e:
-                    return json.dumps({'result': 'error'})
+                    j = json.dumps({'result': 'error'})
                     raise e
             else:
-                return json.dumps({'result': 'already open'})
+                j = json.dumps({'result': 'already open'})
         elif int(form.activate)==0:            
             if open_tunnel:
                 mc.set('deactivate', True)
-                return json.dumps({'result': 'stopping'})
+                j = json.dumps({'result': 'stopping'})
             else:
-                return json.dumps({'result': 'already closed'})
-
+                j = json.dumps({'result': 'already closed'})
+        resp = make_response(j, 200)
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
 
 class settings(object):
     def GET(self):
@@ -248,5 +251,5 @@ def open_wormhole():
 
 
 if __name__ == "__main__":
-    app = web.application(urls, globals())    
-    app.run()
+    # app = web.application(urls, globals())    
+    app.run(host='0.0.0.0', debug=('--debug' in sys.argv))

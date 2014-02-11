@@ -1,34 +1,37 @@
-$def with (path)
 <div class="pure-u" id="menu">
 	<div class="pure-menu pure-menu-open">
     	<a class="pure-menu-heading" href="/"><img src="/static/img/wormhole.png" alt="Wormhole logo" /></a>
 
         <ul>
-        	$if path=='launch':
+        	{% if path=='launch' %}
             	<li class="pure-menu-selected ">
-            $else:
+            {% else %}
             	<li class=" ">
+            {% endif %}
             <a href="/launch"><i class="fa fa-rocket"></i>Start</a>
             </li>
 
-            $if path=='settings':
+            {% if path=='settings' %}
             	<li class="pure-menu-selected ">
-            $else:
+            {% else %}
             	<li class=" ">
+            {% endif %}
             <a href="/settings"><i class="fa fa-wrench"></i>Settings</a>
             </li>	          
 
-            $if path=='status':
+            {% if path=='status' %}
             	<li class="pure-menu-selected">
-            $else:
+            {% else %}
             	<li class=" ">
+            {% endif %}
             <a href="/"><i class="fa fa-dashboard"></i>Status</a>
             </li>
 
-            $if path=='about':
+            {% if path=='about' %}
             	<li class="pure-menu-selected">
-            $else:
+            {% else %}
             	<li class=" ">
+            {% endif %}
             <a href="/about"><i class="fa fa-info-circle"></i>About</a>
             </li>	          
         </ul>
