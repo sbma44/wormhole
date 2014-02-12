@@ -1,4 +1,3 @@
-$def with (valid_credentials, valid_regions, current_region)
 <!doctype html>
 <html lang="en">
 <head>
@@ -22,7 +21,8 @@ $def with (valid_credentials, valid_regions, current_region)
     <span></span>
 	</a>
 
-	$:make_menu('settings')
+	{% set path='settings' %}
+	{% include "menu.html" %}
 
     <div class="pure-u-1" id="main">
 
@@ -37,7 +37,7 @@ $def with (valid_credentials, valid_regions, current_region)
 			<fieldset>
 				<legend>Amazon Web Services Credentials <span id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</span></legend>
 				
-$if valid_credentials>0:
+{% if valid_credentials>0 %}
 	<div class="pure-control-group">
 		<label for="access_key">Access Key</label>
 		<input id="access_key" class="pure-input-1-2" name="access_key" type="text" placeholder="">
@@ -48,22 +48,17 @@ $if valid_credentials>0:
 		<input id="secret_key" class="pure-input-1-2" name="secret_key" type="text" placeholder="">
 	</div>		
         
-$else:
+{% else %}
 	<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> AWS Credentials confirmed</span></div>
 	<div id="change-credentials-msg">Need to change your credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
-	<input id="access_key" name="access_key" type="hidden" value=""/>
-	<input id="secret_key" name="secret_key" type="hidden" value=""/>	
-	<div class="pure-control-group">
-		<label for="save_credentials">&nbsp;</label>
-		<!-- <button type="submit" id="delete_credentials" class="pure-button pure-button-primary">Delete Credentials</button> -->
-	</div>
+{% endif %}
 
 	<script type="text/javascript">
-	$$(function(){
-		$$('#delete_credentials').click(function(){
-			$$('#access_key').val('DELETE');
-			$$('#secret_key').val('DELETE');
-			$$('#settings-form').submit();
+	jQuery(function(){
+		jQuery('#delete_credentials').click(function(){
+			jQuery('#access_key').val('DELETE');
+			jQuery('#secret_key').val('DELETE');
+			jQuery('#settings-form').submit();
 			return false;
 		});
 	});
@@ -74,11 +69,13 @@ $else:
 		    <fieldset>
 				<legend>Output Region <span id="region-error"><i class="fa fa-exclamation-triangle"></i> Please select a region</span></legend>
 				
-				$for (val, label) in valid_regions:
-					$ selected = ""
-					$if val==current_region:
-						$ selected = " checked=\"true\""					
-					<div class="region_choice"><input type="radio" id="region-radio" name="region" value="$val"$:(selected)><span>$label</span></div>
+				{% for (val, label) in valid_regions %}
+					{% set selected='' %}
+					{% if val==current_region %}
+						{% set selected=' checked="true"' %}
+					{% endif %}
+					<div class="region_choice"><input type="radio" id="region-radio" name="region" value="{{ val }}"{{ selected }}><span>{{ label }}</span></div>
+				{% endfor %}
 		    </fieldset>
 
 			<div class="pure-control-group">
@@ -89,31 +86,33 @@ $else:
 
 
 	<script type="text/javascript">
-	$$(function(){
-		$$('#submit_form').click(function(event) {
+	jQuery(function(){
+		jQuery('#submit_form').click(function(event) {
 			var all_clear = true;
 			event.preventDefault();
-			$$('#submit_form').addClass('pure-button-disabled');
-			$$('#credentials-success').hide();
-			$$('#credentials-error').hide();			
-			$$('#credential-check-spinner').show();	
+			jQuery('#submit_form').addClass('pure-button-disabled');
+			jQuery('#credentials-success').hide();
+			jQuery('#credentials-error').hide();			
+			jQuery('#credential-check-spinner').show();	
 
-			if($$('#region-radio:checked').length==0){
-				$$('#region-error').fadeIn();
+			if(jQuery('#region-radio:checked').length==0){
+				jQuery('#region-error').fadeIn();
 				all_clear = false;
 			}
 
-			$$.post('/ajax/validate', {'access_key': $$('#access_key').val(), 'secret_key': $$('#secret_key').val()}, function(result) {
-				$$('#credential-check-spinner').hide();
+			// TODO: test whether credentials have been changed/deleted and therefore need to be validated
+			// otherwise, just submit the new region and don't overwrite the region
+			jQuery.post('/ajax/validate', {'access_key': jQuery('#access_key').val(), 'secret_key': jQuery('#secret_key').val()}, function(result) {
+				jQuery('#credential-check-spinner').hide();
 				if(!result.success){
 					all_clear = false;									
-					$$('#credentials-error').fadeIn();
+					jQuery('#credentials-error').fadeIn();
 				}
 				if(all_clear){
-					$$('#settings-form').submit();					
+					jQuery('#settings-form').submit();					
 				}
 				else {
-					$$('#submit_form').removeClass('pure-button-disabled');
+					jQuery('#submit_form').removeClass('pure-button-disabled');
 				}
 			});
 		});
