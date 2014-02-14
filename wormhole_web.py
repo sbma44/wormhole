@@ -8,29 +8,35 @@ from settings import *
 from flask import Flask, make_response, render_template, request, redirect, url_for
 app = Flask(__name__)
 
+def get_mc():
+    return memcache.Client([MEMCACHE_SERVER], debug=0)
+
+DEACTIVATION_SIGNAL_KEY = 'wormhole-deactivate'
+WORMHOLE_INSTANCE_ID = 'wormhole-instance-id'
+WORMHOLE_EXPIRATION_KEY = 'wormhole-expiration-key'
 
 @app.route('/launch', methods=['GET', 'POST'])
 def launch():
     if request.method=='GET':
         region = wormhole.Wormhole.REGIONS.get(load_region(), {}).get('short_name', False)
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+        mc = get_mc()
         open_tunnel = mc.get('tunnel-open')             
         return render_template('launch.html', open_tunnel=open_tunnel, region=region)
 
     elif request.method=='POST':
-        form = web.input(activate=-1)      
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)        
+        mc = get_mc()
         open_tunnel = mc.get('tunnel-open') 
         j = ''
-        if int(form.activate)==1:   
+        activate_val = int(request.form.get('activate',-1))
+        if activate_val==1:   
             if not open_tunnel:
                 print 'attempting to open tunnel'
                 try:    
-                    mc.set('deactivate', False)   
+                    mc.delete(DEACTIVATION_SIGNAL_KEY)
 
                     # TODO: change this to use the multiprocess module
-
-                    t = Thread(target=open_wormhole)
+                    expire = request.form.get('expire',0)
+                    t = Thread(target=open_wormhole, args=(expire,))
                     t.daemon = True # thread dies with the program
                     t.start()
                     j = json.dumps({'result': 'starting'})
@@ -39,9 +45,9 @@ def launch():
                     raise e
             else:
                 j = json.dumps({'result': 'already open'})
-        elif int(form.activate)==0:            
+        elif activate_val==0:            
             if open_tunnel:
-                mc.set('deactivate', True)
+                mc.set(DEACTIVATION_SIGNAL_KEY, True)
                 j = json.dumps({'result': 'stopping'})
             else:
                 j = json.dumps({'result': 'already closed'})
@@ -95,7 +101,7 @@ def ajax_validate():
 def ajax_launch_status():
     if request.method=='GET':
         web.header('Content-Type', 'application/json')
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+        mc = get_mc()
         status = mc.get('status')
         j = ''
         if not status:
@@ -124,12 +130,12 @@ def update_status(mc, code, result):
     status[code] = result
     mc.set('status', status)
 
-def open_wormhole():
+def open_wormhole(expire=0):
 
     def deactivation_signal_detected():
         global mc, region, credentials, wh
 
-        deactivation_signal = mc.get('deactivate')
+        deactivation_signal = mc.get(DEACTIVATION_SIGNAL_KEY)
         if deactivation_signal:
             return True
         else:
@@ -155,9 +161,9 @@ def open_wormhole():
         wh.stop_all_global_instances()
 
     def do_instance():
-        global mc, region, credentials, wh
-        wh.start_instance()
-        mc.set('instance-id', wh.instance.id)
+        global mc, region, credentials, wh, wh_expire
+        wh.start_instance(tags={'wormhole_expire': wh_expire})
+        mc.set(WORMHOLE_INSTANCE_ID, wh.instance.id)
 
     def do_boot():
         time.sleep(5)
@@ -188,6 +194,7 @@ def open_wormhole():
     def stop_instance():
         global mc, region, credentials, wh
         wh.stop_instance()
+        mc.delete(WORMHOLE_INSTANCE_ID)
 
     def stop_orphans():
         pass
@@ -195,12 +202,14 @@ def open_wormhole():
     def stop_settings():
         pass
 
-    global mc, region, credentials, wh
-    mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+    global mc, region, credentials, wh, wh_expire
+    mc = get_mc()
     mc.set('status', [])
+    mc.delete('')
     region = None
     credentials = None
     wh = None
+    wh_expire = expire
 
     steps = ['settings', 'orphans', 'instance', 'boot', 'openvpn', 'routing']
     for step in steps:

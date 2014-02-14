@@ -1,11 +1,22 @@
 # Find orphaned or ready-to-expire EC2 instances and shut them down.
 # This file should be run on a regular cron
 
-import wormhole
 import time
 from settings import *
+import wormhole
+from wormhole_web import get_mc, DEACTIVATION_SIGNAL_KEY, WORMHOLE_EXPIRATION_KEY, WORMHOLE_INSTANCE_ID
 
 def scavenge():
+	# check for active tunnel & shut down, if necessary
+	# can't just rely on the other system, because local 
+	# routing won't be reset that way
+	mc = get_mc()	
+	if len(mc.get(WORMHOLE_INSTANCE_ID, ''))>0: # is there an active instance?
+		expire = mc.get(WORMHOLE_EXPIRATION_KEY, -1)
+		if expire>0 and expire<time.time(): # are we past expiration?
+			mc.set(DEACTIVATION_SIGNAL_KEY, True) # SHUT IT DOOOOWN
+
+	# okay, now go through and kill the other instances
 	(aws_access_key, aws_secret_key) = load_credentials()
 
 	# iterate through every region
@@ -22,9 +33,10 @@ def scavenge():
 			# if the instance has an expiration flag, make sure
 			# we don't terminate it prematurely
 			if instance.tags.has_key('wormhole-expire'):						
-				expiration = int(instance.tags.get('wormhole-expire', 0))
-				if time.time()<expiration:
-					continue
+				expiration = int(instance.tags.get('wormhole-expire', -1))
+				if expiration>0:
+					if time.time()<expiration:
+						continue
 
 			# ensure that we only shut down instances created by
 			# this machine, and which are wormhole AMIs
