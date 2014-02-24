@@ -1,69 +1,62 @@
-#!/home/pi/.virtualenvs/wormhole/bin/python
-
-import os, json, time
-import web
+import os, json, time, sys
 import wormhole
 import memcache
 from threading import Thread, Event
 from settings import *
 
-urls = (
-    '/settings', 'settings',    
-    '/', 'status',
-    '/ajax/validate', 'ajax_validate',
-    '/ajax/launch-status', 'ajax_launch_status',
-    '/launch', 'launch',
-    '/about', 'about'
-)
+from flask import Flask, make_response, render_template, request, redirect, url_for
+app = Flask(__name__)
 
-def make_menu(path):
-    render = web.template.render('html')
-    return render.menu(path)
+def get_mc():
+    return memcache.Client([MEMCACHE_SERVER], debug=0)
 
-class launch:
-    def GET(self):
-        web.header('Content-Type', 'text/html')     
-        render = web.template.render('html', globals={'make_menu': make_menu})
+DEACTIVATION_SIGNAL_KEY = 'wormhole-deactivate'
+WORMHOLE_INSTANCE_ID = 'wormhole-instance-id'
+WORMHOLE_EXPIRATION_KEY = 'wormhole-expiration-key'
+
+@app.route('/launch', methods=['GET', 'POST'])
+def launch():
+    if request.method=='GET':
         region = wormhole.Wormhole.REGIONS.get(load_region(), {}).get('short_name', False)
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)
-        open_tunnel = mc.get('tunnel-open')     
-        return render.launch(open_tunnel, region)
+        mc = get_mc()
+        open_tunnel = mc.get('tunnel-open')             
+        return render_template('launch.html', open_tunnel=open_tunnel, region=region)
 
-    def POST(self):
-        web.header('Content-Type', 'application/json')      
-        form = web.input(activate=-1)      
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)        
+    elif request.method=='POST':
+        mc = get_mc()
         open_tunnel = mc.get('tunnel-open') 
-        print 'tunnel is open? %s' % open_tunnel
-        if int(form.activate)==1:   
+        j = ''
+        activate_val = int(request.form.get('activate',-1))
+        if activate_val==1:   
             if not open_tunnel:
                 print 'attempting to open tunnel'
                 try:    
-                    mc.set('deactivate', False)   
+                    mc.delete(DEACTIVATION_SIGNAL_KEY)
 
                     # TODO: change this to use the multiprocess module
-
-                    t = Thread(target=open_wormhole)
+                    expire = request.form.get('expire',0)
+                    t = Thread(target=open_wormhole, args=(expire,))
                     t.daemon = True # thread dies with the program
                     t.start()
-                    return json.dumps({'result': 'starting'})
+                    j = json.dumps({'result': 'starting'})
                 except Exception, e:
-                    return json.dumps({'result': 'error'})
+                    j = json.dumps({'result': 'error'})
                     raise e
             else:
-                return json.dumps({'result': 'already open'})
-        elif int(form.activate)==0:            
+                j = json.dumps({'result': 'already open'})
+        elif activate_val==0:            
             if open_tunnel:
-                mc.set('deactivate', True)
-                return json.dumps({'result': 'stopping'})
+                mc.set(DEACTIVATION_SIGNAL_KEY, True)
+                j = json.dumps({'result': 'stopping'})
             else:
-                return json.dumps({'result': 'already closed'})
+                j = json.dumps({'result': 'already closed'})
+        resp = make_response(j, 200)
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
 
-
-class settings(object):
-    def GET(self):
-        web.header('Content-Type', 'text/html')
-
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method=='GET':
         credentials = load_credentials()
         if not credentials:
             valid_credentials = False
@@ -84,48 +77,50 @@ class settings(object):
 
         current_region = load_region()
 
-        render = web.template.render('html', globals={'make_menu': make_menu})
-        return render.settings(valid_credentials, valid_regions, current_region)
+        return render_template('settings.html', valid_credentials=valid_credentials, valid_regions=valid_regions, current_region=current_region)
 
-    def POST(self):
-        form_values = web.input(access_key='', secret_key='')        
-        if form_values.access_key=='DELETE' and form_values.secret_key=='DELETE':
-            os.unlink('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE))
-        elif not '' in (form_values.access_key, form_values.secret_key):
-            save_credentials(form_values.access_key, form_values.secret_key)        
-            save_region(form_values.region)     
-        raise web.seeother('/settings')
+    elif request.method=='POST':
+        if request.form.get('access_key','')=='DELETE' and request.form.get('secret_key','')=='DELETE':
+            os.unlink(credential_file_path())
+        elif not '' in (request.form.get('access_key',''), request.form.get('secret_key','')):
+            save_credentials(request.form.get('access_key'), request.form.get('secret_key'))        
+        save_region(request.form.get('region'))     
+        return redirect(url_for('settings'))
 
-class ajax_validate(object):
-    def POST(self):
+@app.route('/ajax/validate', methods=['POST'])
+def ajax_validate():
+    if request.method=='POST':    
+        region = wormhole.get_valid_regions().items()[0][0]        
+        wh = wormhole.Wormhole(region, request.form.get('access_key'), request.form.get('secret_key'), AWS_DIRECTORY)
+        resp = make_response(json.dumps({'success': wh.validate_credentials()}), 200)
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
+
+@app.route('/ajax/launch-status')
+def ajax_launch_status():
+    if request.method=='GET':
         web.header('Content-Type', 'application/json')
-        region = wormhole.get_valid_regions().items()[0][0]
-        form_values = web.input()
-        wh = wormhole.Wormhole(region, form_values.access_key, form_values.secret_key, AWS_DIRECTORY)
-        return json.dumps({'success': wh.validate_credentials()})
-
-class ajax_launch_status(object):
-    def GET(self):
-        web.header('Content-Type', 'application/json')
-        mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+        mc = get_mc()
         status = mc.get('status')
+        j = ''
         if not status:
-            return json.dumps({})
+            j = json.dumps({})
         else:
-            return json.dumps(status)
-
-class status(object):
-    def GET(self):
-        web.header('Content-Type', 'text/html')     
-        render = web.template.render('html', globals={'make_menu': make_menu})
-        return render.status()
+            j = json.dumps(status)
+        resp = make_response(json.dumps(j), 200)
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
 
 
-class about(object):
-    def GET(self):
-        web.header('Content-Type', 'text/html')     
-        render = web.template.render('html', globals={'make_menu': make_menu})
-        return render.about()
+@app.route('/status')
+def status():
+    if request.method=='GET':
+        return render_template('status.html')
+
+@app.route('/about')
+def about():
+    if request.method=='GET':
+        return render_template('about.html')
 
 def update_status(mc, code, result):
     status = mc.get('status')
@@ -134,12 +129,12 @@ def update_status(mc, code, result):
     status[code] = result
     mc.set('status', status)
 
-def open_wormhole():
+def open_wormhole(expire=0):
 
     def deactivation_signal_detected():
         global mc, region, credentials, wh
 
-        deactivation_signal = mc.get('deactivate')
+        deactivation_signal = mc.get(DEACTIVATION_SIGNAL_KEY)
         if deactivation_signal:
             return True
         else:
@@ -165,9 +160,9 @@ def open_wormhole():
         wh.stop_all_global_instances()
 
     def do_instance():
-        global mc, region, credentials, wh
-        wh.start_instance()
-        mc.set('instance-id', wh.instance.id)
+        global mc, region, credentials, wh, wh_expire
+        wh.start_instance(tags={'wormhole_expire': wh_expire})
+        mc.set(WORMHOLE_INSTANCE_ID, wh.instance.id)
 
     def do_boot():
         time.sleep(5)
@@ -198,6 +193,7 @@ def open_wormhole():
     def stop_instance():
         global mc, region, credentials, wh
         wh.stop_instance()
+        mc.delete(WORMHOLE_INSTANCE_ID)
 
     def stop_orphans():
         pass
@@ -205,12 +201,14 @@ def open_wormhole():
     def stop_settings():
         pass
 
-    global mc, region, credentials, wh
-    mc = memcache.Client([MEMCACHE_SERVER], debug=0)
+    global mc, region, credentials, wh, wh_expire
+    mc = get_mc()
     mc.set('status', [])
+    mc.delete('')
     region = None
     credentials = None
     wh = None
+    wh_expire = expire
 
     steps = ['settings', 'orphans', 'instance', 'boot', 'openvpn', 'routing']
     for step in steps:

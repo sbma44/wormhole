@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Wormhole admin interface">
+
+    <title>Settings | Wormhole</title>
+
+	<link rel="stylesheet" href="/static/css/pure-min.css">
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+	<link rel="stylesheet" href="/static/css/baby-blue.css">
+	<link rel="stylesheet" href="/static/css/wormhole.css">
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+	<script type="text/javascript">
+		window.credentialValidationIsRequired = false;
+	</script>
+</head>
+
+<body>
+
+<div class="pure-g-r" id="layout">
+    <a href="#menu" id="menuLink" class="pure-menu-link">
+    <span></span>
+	</a>
+
+	{% set path='settings' %}
+	{% include "menu.html" %}
+
+    <div class="pure-u-1" id="main">
+
+		<div class="header">
+		    <h1>Settings</h1>		  
+		    <h2>Amazon credentials &amp; preferred region.</h2>		  
+		</div>
+
+		<div class="content">		
+
+		<form class="pure-form pure-form-aligned" id="settings-form" method="POST">		
+			<fieldset>
+				<legend>Output Region <span id="region-error"><i class="fa fa-exclamation-triangle"></i> Please select a region</span></legend>
+				
+				{% for (val, label) in valid_regions %}
+					{% set selected='' %}
+					{% if val==current_region %}
+						{% set selected=' checked="true"' %}
+					{% endif %}
+					<div class="region_choice"><input type="radio" id="region-radio" name="region" value="{{ val }}"{{ selected }}><span>{{ label }}</span></div>
+				{% endfor %}
+		    </fieldset>
+
+			<fieldset>
+				<legend>Amazon Web Services Credentials <span id="credentials-error"><i class="fa fa-exclamation-triangle"></i> Invalid credentials</span></legend>
+				
+				{% if valid_credentials>0 %}
+
+				<div class="pure-control-group">
+					<label for="access_key">Access Key</label>
+					<input id="access_key" class="pure-input-1-2" name="access_key" type="text" placeholder="">
+				</div>
+
+				<div class="pure-control-group">
+					<label for="secret_key">Secret Key</label>
+					<input id="secret_key" class="pure-input-1-2" name="secret_key" type="text" placeholder="">
+				</div>	
+
+				<script type="text/javascript">
+					window.credentialValidationIsRequired = true;
+				</script>	
+			        
+				{% else %}
+				
+				<div><span class="control-group-message-success" id="credentials-verified"><i class="fa fa-check-circle "></i> AWS Credentials confirmed</span></div>
+				<div id="change-credentials-msg">Need to change your credentials? <a href="#" id="delete_credentials">Click here to delete them</a>.</div>
+				<input type="hidden" name="access_key" id="access_key" value="">
+				<input type="hidden" name="secret_key" id="secret_key" value="">
+				
+				{% endif %}
+
+				<script type="text/javascript">
+				jQuery(function(){
+					jQuery('#delete_credentials').click(function(){
+						jQuery('#access_key').val('DELETE');
+						jQuery('#secret_key').val('DELETE');
+						window.credentialValidationIsRequired = false;
+						jQuery('#settings-form').submit();
+						return false;
+					});
+				});
+				</script>
+
+			</fieldset>
+
+		    <div class="pure-control-group">
+				<label for="submit_form">&nbsp;</label>
+				<button type="submit" id="submit_form" class="pure-button pure-button-primary">Save</button><img src="/static/img/loadinfo.gif" alt="ajax loading indicator" id="credential-check-spinner" />
+			</div>
+		</form>
+
+
+	<script type="text/javascript">
+	jQuery(function(){
+		jQuery('#submit_form').click(function(event) {
+			var all_clear = true;
+			event.preventDefault();
+			jQuery('#submit_form').addClass('pure-button-disabled');
+			jQuery('#credentials-success').hide();
+			jQuery('#credentials-error').hide();			
+			jQuery('#credential-check-spinner').show();	
+
+			if(jQuery('#region-radio:checked').length==0){
+				jQuery('#region-error').fadeIn();
+				all_clear = false;
+			}
+
+			// TODO: test whether credentials have been changed/deleted and therefore need to be validated
+			// otherwise, just submit the new region and don't overwrite the region
+			var manipulate_form = function(all_clear){
+				if(all_clear){
+					jQuery('#settings-form').submit();					
+				}
+				else {
+					jQuery('#submit_form').removeClass('pure-button-disabled');
+				}
+			};
+
+			if (window.credentialValidationIsRequired===true){
+				jQuery.post('/ajax/validate', {'access_key': jQuery('#access_key').val(), 'secret_key': jQuery('#secret_key').val()}, function(result) {
+					jQuery('#credential-check-spinner').hide();
+					if(!result.success){
+						all_clear = false;									
+						jQuery('#credentials-error').fadeIn();
+					}
+					manipulate_form(all_clear);
+				});
+			}
+			else{
+				manipulate_form(all_clear);
+			}			
+		});
+	});
+	</script>
+
+
+    	</div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -151,29 +151,20 @@ class Wormhole(object):
 		openvpn_call = [
 			'openvpn',
 			'--client',
-			'--dev',
-			'tun',
-			'--proto',
-			'udp',
-			'--remote',
-			self.instance_ip,
-			self.OPENVPN_PORT,
-			'--resolv-retry',
-			'infinite',
+			'--dev', 'tun',
+			'--proto', 'udp',
+			'--remote',	self.instance_ip, self.OPENVPN_PORT,
+			'--resolv-retry', 'infinite',
 			'--nobind',
 			'--persist-key',
 			'--persist-tun',
-			'--ca',
-			'ca.crt',
-			'--cert',
-			'client.crt',
-			'--key',
-			'client.key',
+			'--ca',	'ca.crt',
+			'--cert', 'client.crt',
+			'--key', 'client.key',
 			'--comp-lzo',
-			'--verb',
-			'3',
-			'--cd',
-			'%s/openvpn' % os.getcwd()
+			'--verb', '3',
+			'--cd',	'%s/openvpn' % os.getcwd(),
+			'--setenv', 'test_key', 'test_value'
 		]
 
 		self.tunnel_process = subprocess.Popen(map(lambda x: str(x), openvpn_call), stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
@@ -301,12 +292,6 @@ class Wormhole(object):
 		}
 	}
 
-	AMI_USER_NAME = 'ec2-user'
 	SECURITY_GROUP_NAME = 'wormhole-vpn-sg'
 	INSTANCE_SIZE = 't1.micro'
-	#KEY_PAIR_PATH = '.'
-	#KEY_PAIR_NAME = 'wormhole-kp'
-	SQLITE_DB = 'wormhole.db'
 	OPENVPN_PORT = 1194
-
-# sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE

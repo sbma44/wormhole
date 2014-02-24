@@ -22,6 +22,17 @@
 	color: rgb(28, 184, 65);
 }
 
+#expiration {
+    font-size: 1.5em;
+}
+
+#expiration select {
+    position: relative;
+    top: -3px;
+    font-size: 1.5em;
+    margin-bottom: 0.75em;
+}
+
 #launch-checklist .error {
 	color: rgb(202, 60, 60);
 }

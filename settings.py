@@ -5,6 +5,9 @@ AWS_CREDENTIALS_FILE = 'aws_credentials.json'
 REGION_FILE = 'aws_region.json'
 MEMCACHE_SERVER = '127.0.0.1:11211'
 
+def credential_file_path():
+    return '%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE)
+
 def load_region():
     if os.path.exists('%s/%s' % (AWS_DIRECTORY, REGION_FILE)):
         return json.load(open('%s/%s' % (AWS_DIRECTORY, REGION_FILE)))
@@ -17,8 +20,8 @@ def save_region(region):
     f.close()
 
 def load_credentials():
-    if os.path.exists('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE)):
-        f = open('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE), 'r')
+    if os.path.exists(credential_file_path()):
+        f = open(credential_file_path(), 'r')
         j = f.read()
         f.close()
         return json.loads(j)
@@ -26,7 +29,7 @@ def load_credentials():
         return False
                     
 def save_credentials(aws_access_key, aws_secret_key):
-    f = open('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE), 'w')
+    f = open(credential_file_path(), 'w')
     json.dump((aws_access_key, aws_secret_key), f)
     f.close()
 
