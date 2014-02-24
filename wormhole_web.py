@@ -1,3 +1,5 @@
+#!/home/pi/.virtualenvs/wormhole/bin/python
+
 import os, json, time
 import web
 import wormhole
@@ -88,7 +90,7 @@ class settings(object):
     def POST(self):
         form_values = web.input(access_key='', secret_key='')        
         if form_values.access_key=='DELETE' and form_values.secret_key=='DELETE':
-            os.unlink(AWS_CREDENTIALS_FILE)
+            os.unlink('%s/%s' % (AWS_DIRECTORY, AWS_CREDENTIALS_FILE))
         elif not '' in (form_values.access_key, form_values.secret_key):
             save_credentials(form_values.access_key, form_values.secret_key)        
             save_region(form_values.region)     
@@ -248,5 +250,8 @@ def open_wormhole():
 
 
 if __name__ == "__main__":
+    if os.getuid()!=0:
+        raise Exception('This script must be run as root')
+
     app = web.application(urls, globals())    
     app.run()
