@@ -19,8 +19,13 @@ sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 # change hostapd binary
 service hostapd stop
 mv /usr/sbin/hostapd /usr/sbin/hostapd.ORIG 
-mv hostapd /usr/sbin
+cp hostapd /usr/sbin
 chmod 755 /usr/sbin/hostapd
+cp hostapd.conf /etc/hostapd/hostapd.conf
+cp hostapd_initd /etc/init.d/hostapd
+chmod 755 /etc/init.d/hostapd
+
+
 
 # copy config files
 cp interfaces /etc/network/interfaces
