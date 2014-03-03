@@ -17,10 +17,10 @@ WORMHOLE_EXPIRATION_KEY = 'wormhole-expiration-key'
 @app.route('/', methods=['GET'])
 def default():
     credentials = load_credentials()
-        if not credentials:
-            return redirect(url_for('settings'))
-        else:
-            return redirect(url_for('launch'))
+    if not credentials:
+        return redirect(url_for('settings'))
+    else:
+        return redirect(url_for('launch'))
 
 @app.route('/launch', methods=['GET', 'POST'])
 def launch():
