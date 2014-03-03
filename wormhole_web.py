@@ -14,6 +14,14 @@ DEACTIVATION_SIGNAL_KEY = 'wormhole-deactivate'
 WORMHOLE_INSTANCE_ID = 'wormhole-instance-id'
 WORMHOLE_EXPIRATION_KEY = 'wormhole-expiration-key'
 
+@app.route('/', methods=['GET'])
+def default():
+    credentials = load_credentials()
+        if not credentials:
+            return redirect(url_for('settings'))
+        else:
+            return redirect(url_for('launch'))
+
 @app.route('/launch', methods=['GET', 'POST'])
 def launch():
     if request.method=='GET':
