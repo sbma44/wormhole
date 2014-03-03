@@ -203,7 +203,7 @@ def open_wormhole(expire=0):
     global mc, region, credentials, wh, wh_expire
     mc = get_mc()
     mc.set('status', [])
-    mc.delete('')
+    mc.delete(WORMHOLE_INSTANCE_ID)
     region = None
     credentials = None
     wh = None
