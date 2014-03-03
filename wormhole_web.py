@@ -4,7 +4,7 @@ import memcache
 from threading import Thread, Event
 from settings import *
 
-from flask import Flask, make_response, render_template, request, redirect, url_for
+from flask import Flask, make_response, render_template, request, redirect, url_for, jsonify
 app = Flask(__name__)
 
 def get_mc():
@@ -38,21 +38,20 @@ def launch():
                     t = Thread(target=open_wormhole, args=(expire,))
                     t.daemon = True # thread dies with the program
                     t.start()
-                    j = json.dumps({'result': 'starting'})
+                    j = {'result': 'starting'}
                 except Exception, e:
-                    j = json.dumps({'result': 'error'})
+                    j = {'result': 'error'}
                     raise e
             else:
-                j = json.dumps({'result': 'already open'})
+                j = {'result': 'already open'}
         elif activate_val==0:            
             if open_tunnel:
                 mc.set(DEACTIVATION_SIGNAL_KEY, True)
-                j = json.dumps({'result': 'stopping'})
+                j = {'result': 'stopping'}
             else:
-                j = json.dumps({'result': 'already closed'})
-        resp = make_response(j, 200)
-        resp.headers['Content-Type'] = 'application/json'
-        return resp
+                j = {'result': 'already closed'}
+
+	return jsonify(**j)
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -92,24 +91,16 @@ def ajax_validate():
     if request.method=='POST':    
         region = wormhole.get_valid_regions().items()[0][0]        
         wh = wormhole.Wormhole(region, request.form.get('access_key'), request.form.get('secret_key'), AWS_DIRECTORY)
-        resp = make_response(json.dumps({'success': wh.validate_credentials()}), 200)
-        resp.headers['Content-Type'] = 'application/json'
-        return resp
+	return jsonify(success=wh.validate_credentials())
 
 @app.route('/ajax/launch-status')
 def ajax_launch_status():
     if request.method=='GET':        
         mc = get_mc()
         status = mc.get('status')
-        j = ''
         if not status:
-            j = json.dumps({})
-        else:
-            j = json.dumps(status)
-        resp = make_response(json.dumps(j), 200)
-        resp.headers['Content-Type'] = 'application/json'
-        return resp
-
+            status = {}
+        return jsonify(**status)
 
 @app.route('/status')
 def status():
@@ -250,4 +241,4 @@ if __name__ == "__main__":
     if os.getuid()!=0:
         raise Exception('This script must be run as root')
 
-    app.run()
+    app.run('0.0.0.0')
