@@ -98,8 +98,7 @@ def ajax_validate():
 
 @app.route('/ajax/launch-status')
 def ajax_launch_status():
-    if request.method=='GET':
-        web.header('Content-Type', 'application/json')
+    if request.method=='GET':        
         mc = get_mc()
         status = mc.get('status')
         j = ''
@@ -251,5 +250,4 @@ if __name__ == "__main__":
     if os.getuid()!=0:
         raise Exception('This script must be run as root')
 
-    app = web.application(urls, globals())    
     app.run()
