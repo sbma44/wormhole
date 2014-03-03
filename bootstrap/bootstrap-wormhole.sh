@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # change hostname
 CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
 NEW_HOSTNAME='wormhole'
