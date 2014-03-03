@@ -5,7 +5,7 @@ echo $NEW_HOSTNAME > /etc/hostname
 sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
 
 # install packages
-apt-get install -y hostapd memcached openvpn isc-dhcp-server nginx
+apt-get install -y hostapd memcached openvpn isc-dhcp-server nginx supervisor
 
 # IP forwarding
 cat ip_forward | tee -a /etc/sysctl.conf
@@ -28,8 +28,14 @@ cp isc-dhcp-server /etc/default/
 cp iptables /etc/network/if-pre-up.d/iptables
 chmod +x /etc/network/if-pre-up.d/iptables
 
+# web stuff
+cp gunicorn_supervisor.conf /etc/supervisor/conf.d/gunicorn.conf
+rm /etc/nginx/sites-enabled/default
+cp nginx_wormhole.conf /etc/nginx/sites-enabled/wormhole
+
 ifconfig eth1 192.168.42.1
 ifconfig wlan0 192.168.43.1
 
 update-rc.d isc-dhcp-server enable
 service hostapd start
+service supervisor stop && service supervisor start
