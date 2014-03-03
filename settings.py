@@ -9,6 +9,6 @@ MEMCACHE_SERVER = '127.0.0.1:11211'
 try:
     from local_settings import *
 except Exception, e:
-    raise e
+    pass
 
 from wormhole_helpers import * 
