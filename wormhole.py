@@ -163,8 +163,8 @@ class Wormhole(object):
 			'--key', 'client.key',
 			'--comp-lzo',
 			'--verb', '3',
-			'--cd',	'%s/openvpn' % os.getcwd(),
-			'--setenv', 'test_key', 'test_value'
+			'--cd',	'%s/openvpn' % OPENVPN_DIRECTORY,
+			#'--setenv', 'test_key', 'test_value'
 		]
 
 		self.tunnel_process = subprocess.Popen(map(lambda x: str(x), openvpn_call), stdout=subprocess.PIPE, bufsize=1, close_fds=ON_POSIX)
