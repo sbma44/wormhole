@@ -11,13 +11,21 @@ def scavenge():
 	# can't just rely on the other system, because local 
 	# routing won't be reset that way
 	mc = get_mc()	
-	if len(mc.get(WORMHOLE_INSTANCE_ID, ''))>0: # is there an active instance?
-		expire = mc.get(WORMHOLE_EXPIRATION_KEY, -1)
-		if expire>0 and expire<time.time(): # are we past expiration?
-			mc.set(DEACTIVATION_SIGNAL_KEY, True) # SHUT IT DOOOOWN
+	instance_id = mc.get(WORMHOLE_INSTANCE_ID)
+	if instance_id: # is there an active instance?
+		
+		expire = mc.get(WORMHOLE_EXPIRATION_KEY)
+		if expire:
+			if expire>0 and expire<time.time(): # are we past expiration?
+				mc.set(DEACTIVATION_SIGNAL_KEY, True) # SHUT IT DOOOOWN
 
 	# okay, now go through and kill the other instances
-	(aws_access_key, aws_secret_key) = load_credentials()
+	credentials = load_credentials()
+	if not credentials:
+		raise Exception('No valid credentials found.')
+	
+	aws_access_key = credentials[0]
+	aws_secret_key = credentials[1]
 
 	# iterate through every region
 	for (region_id, region_values) in wormhole.Wormhole.REGIONS.items():
