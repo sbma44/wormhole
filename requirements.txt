@@ -9,6 +9,7 @@ csvkit==0.6.1
 dbf==0.95.004
 ecdsa==0.10
 envoy==0.0.2
+gunicorn==18.0
 itsdangerous==0.23
 openpyxl==1.7.0
 paramiko==1.12.0
