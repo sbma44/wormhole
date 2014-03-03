@@ -71,7 +71,7 @@
 			<select id="expire" name="expire">
 				<option value="{{ 1 * 60 * 60 }}">1 hour</option>
 				<option value="{{ 2 * 60 * 60 }}">2 hours</option>
-				<option value="{{ 3 * 60 * 60 }}">3 hours</option>
+				<option value="{{ 3 * 60 * 60 }}" selected>3 hours</option>
 				<option value="{{ 6 * 60 * 60 }}">6 hours</option>
 				<option value="{{ 12 * 60 * 60 }}">12 hours</option>
 				<option value="{{ 24 * 60 * 60 }}">24 hours</option>
@@ -100,6 +100,7 @@
 						jQuery('#launch-checklist li').removeClass('working error ok').addClass('pending');						
 						jQuery('#wormhole-icon').animate({fill: 'rgb(75, 75, 75)'}, 1000).addClass('spinit');						
 						jQuery('#launch-checklist').slideDown();
+						jQuery('#expiration').slideUp();
 
 						jQuery.post('/launch', {activate: 1}, function(data){
 							if(data.result=='error'){
@@ -157,6 +158,7 @@
 											jQuery('#launch-checklist li').removeClass('working error ok').addClass('pending');						
 											jQuery('#wormhole-icon').animate({fill: '#eee'}, 1000).removeClass('spinit');						
 											jQuery('#launch-checklist').slideUp();
+											jQuery('#expiration').slideDown();
 											jQuery('#open-wormhole').removeClass('pure-button-disabled');
 											button_disabled = false;
 											window.clearInterval(interval);
