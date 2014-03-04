@@ -102,7 +102,7 @@
 						jQuery('#launch-checklist').slideDown();
 						jQuery('#expiration').slideUp();
 
-						jQuery.post('/launch', {activate: 1}, function(data){
+						jQuery.post('/launch', {activate: 1, expire: $('#expire').val()}, function(data){
 							if(data.result=='error'){
 								alert('Error detected.');
 							}
