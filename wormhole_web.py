@@ -44,7 +44,7 @@ def launch():
                     mc.delete(DEACTIVATION_SIGNAL_KEY)
 
                     # TODO: change this to use the multiprocess module
-                    expire = request.form.get('expire',0)
+                    expire = int(request.form.get('expire',0))
                     if expire>0:
                         expire = expire + int(time.time())
                     t = Thread(target=open_wormhole, args=(expire,))
