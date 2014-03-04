@@ -42,10 +42,12 @@ def scavenge():
 
 			# if the instance has an expiration flag, make sure
 			# we don't terminate it prematurely
-			if instance.tags.has_key('wormhole-expire'):						
-				expiration = int(instance.tags.get('wormhole-expire', -1))
-				if expiration>0:
+			if instance.tags.has_key('wormhole_expire'):	
+
+				expiration = int(instance.tags.get('wormhole_expire', -1))				
+				if expiration>0:					
 					if time.time()<expiration:
+						# print 'found instance but it\'s not set to expire for another %d seconds' % (expiration - time.time())
 						continue
 
 			# ensure that we only shut down instances created by
