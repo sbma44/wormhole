@@ -133,7 +133,7 @@
 						activate_state = false;
 					}
 					else {
-						jQuery('#open-wormhole').text('Open Wormhole').addClass('pure-button-disabled');
+						jQuery('#open-wormhole').text('Go').addClass('pure-button-disabled');
 						button_disabled = true;
 
 						jQuery.post('/launch', {activate: 0}, function(data){
