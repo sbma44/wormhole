@@ -1,5 +1,6 @@
 import boto.ec2
 import os, sys, time, sqlite3, subprocess, json
+from settings import *
 from threading import Thread
 from urllib import urlopen
 from threading  import Thread
@@ -163,7 +164,7 @@ class Wormhole(object):
 			'--key', 'client.key',
 			'--comp-lzo',
 			'--verb', '3',
-			'--cd',	'%s/openvpn' % OPENVPN_DIRECTORY,
+			'--cd',	OPENVPN_DIRECTORY,
 			#'--setenv', 'test_key', 'test_value'
 		]
 
