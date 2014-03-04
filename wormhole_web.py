@@ -45,6 +45,8 @@ def launch():
 
                     # TODO: change this to use the multiprocess module
                     expire = request.form.get('expire',0)
+                    if expire>0:
+                        expire = expire + int(time.time())
                     t = Thread(target=open_wormhole, args=(expire,))
                     t.daemon = True # thread dies with the program
                     t.start()
