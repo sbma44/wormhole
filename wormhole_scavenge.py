@@ -1,3 +1,5 @@
+#!/home/pi/.virtualenvs/wormhole/bin/python
+
 # Find orphaned or ready-to-expire EC2 instances and shut them down.
 # This file should be run on a regular cron
 
